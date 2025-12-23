@@ -50,5 +50,5 @@ return [
         'refresh_token',
     ],
 
-    'message_prefix' => 'HTTP Request: '
+    'message_prefix' => 'HTTP Request: ',
 ];

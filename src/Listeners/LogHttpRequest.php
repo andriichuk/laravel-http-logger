@@ -20,28 +20,28 @@ final readonly class LogHttpRequest
 
     public function handle(RequestHandled $event): void
     {
-        if (!$this->config['enabled'] || !$event->request->is($this->config['routes'])) {
+        if (! $this->config['enabled'] || ! $event->request->is($this->config['routes'])) {
             return;
         }
 
-        if (!$this->config['report']['info'] && $event->response->isInformational()) {
+        if (! $this->config['report']['info'] && $event->response->isInformational()) {
             return;
         }
 
-        if (!$this->config['report']['success'] && $event->response->isSuccessful()) {
+        if (! $this->config['report']['success'] && $event->response->isSuccessful()) {
             return;
         }
 
-        if (!$this->config['report']['client_error'] && $event->response->isClientError()) {
+        if (! $this->config['report']['client_error'] && $event->response->isClientError()) {
             return;
         }
 
-        if (!$this->config['report']['server_error'] && $event->response->isServerError()) {
+        if (! $this->config['report']['server_error'] && $event->response->isServerError()) {
             return;
         }
 
         Log::channel($this->config['channel'])->info(
-            message: $this->config['message_prefix'] . $event->request->method() . ' ' . $event->request->getPathInfo(),
+            message: $this->config['message_prefix'].$event->request->method().' '.$event->request->getPathInfo(),
             context: [
                 'headers' => Arr::only($event->request->headers->all(), $this->config['include_headers']),
                 'request' => $this->sanitizer->sanitize($event->request->all()),
@@ -51,6 +51,4 @@ final readonly class LogHttpRequest
             ],
         );
     }
-
-
 }

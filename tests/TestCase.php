@@ -2,9 +2,9 @@
 
 namespace Andriichuk\HttpLogger\Tests;
 
+use Andriichuk\HttpLogger\HttpLoggerServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Andriichuk\HttpLogger\HttpLoggerServiceProvider;
 
 class TestCase extends Orchestra
 {
