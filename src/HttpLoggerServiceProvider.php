@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Andriichuk\HttpLogger;
 
+use Andriichuk\HttpLogger\Commands\HttpLoggerCommand;
 use Andriichuk\HttpLogger\Listeners\LogHttpRequest;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Support\Facades\Event;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Andriichuk\HttpLogger\Commands\HttpLoggerCommand;
 
 final class HttpLoggerServiceProvider extends PackageServiceProvider
 {
