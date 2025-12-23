@@ -23,9 +23,9 @@ final readonly class Sanitizer
 
             if (is_string($value)) {
                 $data[$key] = mb_strlen($value) > $maxLength
-                    ? mb_substr($value, 0, $maxLength) . '…'
+                    ? mb_substr($value, 0, $maxLength).'…'
                     : $value;
-            } elseif (!is_scalar($value)) {
+            } elseif (! is_scalar($value)) {
                 $data[$key] = $this->sanitize((array) $value, $maxLength);
             }
         }
