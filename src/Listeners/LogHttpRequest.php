@@ -55,7 +55,7 @@ final readonly class LogHttpRequest
 
         $responseHeaders = [];
 
-        if (isset($event->response->headers) && is_object($event->response->headers) && method_exists($event->response->headers, 'all')) {
+        if (isset($event->response->headers)) {
             $responseHeaders = $this->maskHeaders(
                 $this->pickHeaders($event->response->headers->all(), $this->config['include_response_headers']),
                 $this->config['sensitive_headers']
