@@ -2,6 +2,23 @@
 
 All notable changes to `laravel-http-logger` will be documented in this file.
 
+## 0.1.1 - 2025-03-07
+
+### Changed
+
+- Default `routes` config is now `['*']` (log all routes) instead of empty.
+- Publish tag corrected to `http-logger-config` in README (was `laravel-http-logger-config`).
+- Message prefix default set to `[HttpLogger] `.
+
+### Added
+
+- Header wildcard: set `include_request_headers` or `include_response_headers` to `['*']` to include all headers.
+- PHP requirement relaxed to `^8.3` (support PHP 8.3 and 8.4).
+
+### Fixed
+
+- PHPStan: exclude config from analysis (env() rule); simplify response headers check in listener so CI passes.
+
 ## 0.1.0 - 2025-03-07
 
 ### Added
