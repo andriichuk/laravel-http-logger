@@ -18,7 +18,7 @@ composer require andriichuk/laravel-http-logger
 Publish the config file:
 
 ```bash
-php artisan vendor:publish --tag="laravel-http-logger-config"
+php artisan vendor:publish --tag="http-logger-config"
 ```
 
 Add a log channel for HTTP logs in `config/logging.php` (e.g. a dedicated file or stack):
@@ -27,7 +27,7 @@ Add a log channel for HTTP logs in `config/logging.php` (e.g. a dedicated file o
 'channels' => [
     // ...
     'http' => [
-        'driver' => 'single',
+        'driver' => 'daily',
         'path' => storage_path('logs/http.log'),
         'level' => 'debug',
     ],

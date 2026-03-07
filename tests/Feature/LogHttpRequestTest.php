@@ -179,3 +179,33 @@ it('includes only configured request and response headers and masks sensitive on
     expect($logged['context']['request_headers']['x-custom'])->toBe(['value']);
     expect($logged['context']['response_headers'])->toHaveKey('content-type');
 });
+
+it('includes all request and response headers when wildcard (*) is set', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.include_request_headers', ['*']);
+    config()->set('http-logger.include_response_headers', ['*']);
+    config()->set('http-logger.sensitive_headers', ['authorization']);
+    config()->set('http-logger.include_response', false);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($msg, $ctx) use (&$logged) {
+        $logged = ['context' => $ctx];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/x', 'GET');
+    $request->headers->set('X-Custom', 'value');
+    $request->headers->set('Authorization', 'Bearer secret');
+    $response = new Response('ok', 200, ['Content-Type' => 'application/json', 'X-Response-Id' => '123']);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context']['request_headers'])->toHaveKeys(['x-custom', 'authorization']);
+    expect($logged['context']['request_headers']['authorization'])->toBe('***');
+    expect($logged['context']['response_headers'])->toHaveKeys(['content-type', 'x-response-id']);
+});

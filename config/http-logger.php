@@ -30,12 +30,12 @@ return [
     | Route Patterns
     |--------------------------------------------------------------------------
     |
-    | Laravel route patterns to log. Empty array = no routes logged.
-    | Use ['*'] or ['api/*', 'webhook/*'] to log matching routes.
+    | Laravel route patterns to log. ['*'] = all routes. Use [] for none.
+    | Or restrict to patterns e.g. ['api/*', 'webhook/*'].
     |
     */
 
-    'routes' => [],
+    'routes' => ['*'],
 
     /*
     |--------------------------------------------------------------------------
@@ -63,6 +63,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Header names (lowercase) to include in the log context for the request.
+    | Use ['*'] to include all request headers.
     |
     */
 
@@ -78,7 +79,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Header names (lowercase) to include in the log context for the response.
-    | Useful for API: content-type, x-request-id, x-rate-limit-*.
+    | Use ['*'] to include all response headers.
     |
     */
 
