@@ -7,48 +7,125 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option controls whether HTTP requests should be logged.
-    | You can enable or disable logging based on your application's needs.
+    | Set to true to enable, or use LOG_HTTP_REQUESTS env variable.
     |
     */
 
     'enabled' => env('LOG_HTTP_REQUESTS', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Log Channel
+    |--------------------------------------------------------------------------
+    |
+    | The log channel to use. Ensure this channel exists in config/logging.php.
+    | Example: add a stack or single channel named "http" in logging.php.
+    |
+    */
+
     'channel' => env('HTTP_LOG_CHANNEL', 'http'),
 
-    'routes' => [
+    /*
+    |--------------------------------------------------------------------------
+    | Route Patterns
+    |--------------------------------------------------------------------------
+    |
+    | Laravel route patterns to log. Empty array = no routes logged.
+    | Use ['*'] or ['api/*', 'webhook/*'] to log matching routes.
+    |
+    */
 
-    ],
+    'routes' => [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Report by Status
+    |--------------------------------------------------------------------------
+    |
+    | Which response status codes to log: 1xx info, 2xx success, 3xx redirect,
+    | 4xx client_error, 5xx server_error. Set to true to log that category.
+    |
+    */
 
     'report' => [
-        // 1xx status codes
         'info' => false,
-
-        // 2xx status codes
         'success' => false,
-
-        // 3xx status codes
         'redirect' => false,
-
-        // 4xx status codes
         'client_error' => true,
-
-        // 5xx status codes
         'server_error' => true,
     ],
 
     'include_response' => true,
 
-    'include_headers' => [
+    /*
+    |--------------------------------------------------------------------------
+    | Request Headers to Include
+    |--------------------------------------------------------------------------
+    |
+    | Header names (lowercase) to include in the log context for the request.
+    |
+    */
+
+    'include_request_headers' => [
         'x-app-version',
         'x-device-id',
         'x-device-type',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Response Headers to Include
+    |--------------------------------------------------------------------------
+    |
+    | Header names (lowercase) to include in the log context for the response.
+    | Useful for API: content-type, x-request-id, x-rate-limit-*.
+    |
+    */
+
+    'include_response_headers' => [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sensitive Body Fields
+    |--------------------------------------------------------------------------
+    |
+    | Request/response body keys to replace with *** in logs (e.g. token, password).
+    |
+    */
+
     'sensitive_fields' => [
         'token',
-        'code',
         'refresh_token',
+        'password',
+        'confirm_password',
+        'access_token',
+        'api_key',
     ],
 
-    'message_prefix' => 'HTTP Request: ',
+    /*
+    |--------------------------------------------------------------------------
+    | Sensitive Headers
+    |--------------------------------------------------------------------------
+    |
+    | Header names (lowercase) to replace with *** in logs (e.g. authorization, cookie).
+    |
+    */
+
+    'sensitive_headers' => [
+        'authorization',
+        'cookie',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Max Body Length
+    |--------------------------------------------------------------------------
+    |
+    | Maximum string length for body values before truncation (ellipsis added).
+    |
+    */
+
+    'max_body_length' => 100,
+
+    'message_prefix' => '[HttpLogger] ',
 ];
