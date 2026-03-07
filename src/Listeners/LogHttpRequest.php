@@ -88,7 +88,7 @@ final readonly class LogHttpRequest
 
     /**
      * @param  array<string, array<int, string>>  $all
-     * @param  array<int, string>  $include
+     * @param  array<int, string>  $include  Header names to include, or ['*'] for all.
      * @return array<string, array<int, string>>
      */
     private function pickHeaders(array $all, array $include): array
@@ -98,6 +98,11 @@ final readonly class LogHttpRequest
         }
 
         $lower = array_change_key_case($all, CASE_LOWER);
+
+        if (in_array('*', $include, true)) {
+            return $lower;
+        }
+
         $includeLower = array_map('strtolower', $include);
 
         return Arr::only($lower, $includeLower);
