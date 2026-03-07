@@ -1,6 +1,6 @@
 {
     "name": "andriichuk/laravel-http-logger",
-    "description": "Laravel HTTP Logger",
+    "description": "Configurable HTTP request and response logger for Laravel, ideal for APIs.",
     "keywords": ["laravel", "http", "logger", "logging", "http-logger"],
     "homepage": "https://github.com/andriichuk/laravel-http-logger",
     "license": "MIT",
@@ -30,8 +30,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Andriichuk\\HttpLogger\\": "src/",
-            "Andriichuk\\HttpLogger\\Database\\Factories\\": "database/factories/"
+            "Andriichuk\\HttpLogger\\": "src/"
         }
     },
     "autoload-dev": {
@@ -58,13 +57,14 @@
     "extra": {
         "laravel": {
             "providers": [
-                "HttpLoggerServiceProvider"
-            ],
-            "aliases": {
-                "HttpLogger": "Andriichuk\\HttpLogger\\Facades\\HttpLogger"
-            }
+                "Andriichuk\\HttpLogger\\HttpLoggerServiceProvider"
+            ]
         }
     },
-    "minimum-stability": "dev",
+    "support": {
+        "issues": "https://github.com/andriichuk/laravel-http-logger/issues",
+        "source": "https://github.com/andriichuk/laravel-http-logger"
+    },
+    "minimum-stability": "stable",
     "prefer-stable": true
 }
