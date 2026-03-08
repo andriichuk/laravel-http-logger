@@ -5,6 +5,7 @@ use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\MessageBag;
 
 it('does not log when disabled', function () {
     config()->set('http-logger.enabled', false);
@@ -42,7 +43,7 @@ it('logs when enabled and route matches', function () {
     config()->set('http-logger.include_response_headers', []);
     config()->set('http-logger.sensitive_fields', []);
     config()->set('http-logger.sensitive_headers', []);
-    config()->set('http-logger.max_body_length', 100);
+    config()->set('http-logger.max_string_value_length', 100);
 
     $logged = [];
     $mockChannel = Mockery::mock();
@@ -63,12 +64,13 @@ it('logs when enabled and route matches', function () {
     expect($logged['context']['response'])->toBeArray();
 });
 
-it('skips response body when include_response is true but response content type is not JSON', function () {
+it('logs non-JSON response body (HTML or text) with truncation when include_response is true', function () {
     config()->set('http-logger.enabled', true);
     config()->set('http-logger.routes', ['*']);
     config()->set('http-logger.report.success', true);
     config()->set('http-logger.channel', 'http');
     config()->set('http-logger.include_response', true);
+    config()->set('http-logger.max_string_value_length', 10);
     config()->set('http-logger.include_request_headers', []);
     config()->set('http-logger.include_response_headers', []);
     config()->set('http-logger.sensitive_fields', []);
@@ -88,7 +90,38 @@ it('skips response body when include_response is true but response content type 
     $response = new Response('<html>Hello</html>', 200, ['Content-Type' => 'text/html']);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['context']['response'])->toBe('skipped');
+    expect($logged['context']['response'])->toBe('<html>Hell…');
+});
+
+it('logs full response and request body when max_string_value_length is null', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', true);
+    config()->set('http-logger.max_string_value_length', null);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['message' => $message, 'context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $longHtml = str_repeat('x', 500);
+    $request = Request::create('/api/page', 'POST', ['key' => str_repeat('y', 300)]);
+    $response = new Response($longHtml, 200, ['Content-Type' => 'text/html']);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context']['response'])->toBe($longHtml);
+    expect($logged['context']['request']['key'])->toBe(str_repeat('y', 300));
 });
 
 it('does not include host in log message when include_host_in_message is false', function () {
@@ -296,4 +329,108 @@ it('includes all request and response headers when wildcard (*) is set', functio
     expect($logged['context']['request_headers'])->toHaveKeys(['x-custom', 'authorization']);
     expect($logged['context']['request_headers']['authorization'])->toBe('***');
     expect($logged['context']['response_headers'])->toHaveKeys(['content-type', 'x-response-id']);
+});
+
+it('does not add session_errors to context when include_session_errors is false', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_session_errors', false);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $session = $this->app->make('session')->driver('array');
+    $session->start();
+    $session->flash('errors', new MessageBag(['email' => ['The email field is required.']]));
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/form', 'POST');
+    $request->setLaravelSession($session);
+    $response = new Response('ok', 200);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context'])->not->toHaveKey('session_errors');
+});
+
+it('adds session_errors to context when include_session_errors is true and session has flashed errors', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_session_errors', true);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $session = $this->app->make('session')->driver('array');
+    $session->start();
+    $session->flash('errors', new MessageBag([
+        'email' => ['The email field is required.'],
+        'name' => ['The name may not be greater than 255 characters.'],
+    ]));
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/form', 'POST');
+    $request->setLaravelSession($session);
+    $response = new Response('ok', 200);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context'])->toHaveKey('session_errors');
+    expect($logged['context']['session_errors'])->toBe([
+        'email' => ['The email field is required.'],
+        'name' => ['The name may not be greater than 255 characters.'],
+    ]);
+});
+
+it('does not add session_errors key when include_session_errors is true but session has no errors', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_session_errors', true);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/form', 'GET');
+    $response = new Response('ok', 200);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context'])->not->toHaveKey('session_errors');
 });

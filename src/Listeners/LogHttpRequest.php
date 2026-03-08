@@ -64,16 +64,16 @@ final readonly class LogHttpRequest
         }
 
         $sensitiveFields = $this->config['sensitive_fields'];
-        $maxBodyLength = $this->config['max_body_length'];
+        $maxStringValueLength = $this->config['max_string_value_length'] ?? null;
 
-        $requestBody = $this->sanitizer->sanitize($event->request->all(), $sensitiveFields, $maxBodyLength);
+        $requestBody = $this->sanitizer->sanitize(
+            $event->request->all(),
+            $sensitiveFields,
+            $maxStringValueLength ?? PHP_INT_MAX
+        );
 
-        $responseBody = $this->config['include_response'] && $this->responseIsJson($event->response)
-            ? $this->sanitizer->sanitize(
-                json_decode($event->response->getContent(), true) ?? [],
-                $sensitiveFields,
-                $maxBodyLength
-            )
+        $responseBody = $this->config['include_response']
+            ? $this->formatResponseBodyForLogging($event->response, $sensitiveFields, $maxStringValueLength)
             : 'skipped';
 
         $message = $this->config['message_prefix'].$event->request->method().' ';
@@ -84,15 +84,75 @@ final readonly class LogHttpRequest
 
         $message .= $event->request->getPathInfo();
 
-        Log::channel($this->config['channel'])->info(
-            $message,
-            [
-                'request_headers' => $requestHeaders,
-                'response_headers' => $responseHeaders,
-                'request' => $requestBody,
-                'response' => $responseBody,
-            ]
-        );
+        $context = [
+            'request_headers' => $requestHeaders,
+            'response_headers' => $responseHeaders,
+            'request' => $requestBody,
+            'response' => $responseBody,
+        ];
+
+        if ($this->config['include_session_errors'] ?? false) {
+            $sessionErrors = $this->getFlashedSessionErrors($event->request);
+            if ($sessionErrors !== []) {
+                $context['session_errors'] = $sessionErrors;
+            }
+        }
+
+        Log::channel($this->config['channel'])->info($message, $context);
+    }
+
+    /**
+     * Read flashed validation errors from the session (read-only; does not consume flash).
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function getFlashedSessionErrors(mixed $request): array
+    {
+        if (! method_exists($request, 'hasSession') || ! $request->hasSession()) {
+            return [];
+        }
+
+        $session = $request->session();
+        $errors = $session->get('errors');
+
+        if ($errors === null) {
+            return [];
+        }
+
+        if (is_object($errors) && method_exists($errors, 'getMessages')) {
+            return $errors->getMessages();
+        }
+
+        if (is_array($errors)) {
+            return $errors;
+        }
+
+        return [];
+    }
+
+    /**
+     * @param  array<string>  $sensitiveFields
+     * @return array<string, mixed>|string
+     */
+    private function formatResponseBodyForLogging(HttpResponse $response, array $sensitiveFields, ?int $maxStringValueLength): array|string
+    {
+        $content = $response->getContent();
+
+        if ($this->responseIsJson($response)) {
+            return $this->sanitizer->sanitize(
+                json_decode($content, true) ?? [],
+                $sensitiveFields,
+                $maxStringValueLength ?? PHP_INT_MAX
+            );
+        }
+
+        $contentString = is_string($content) ? $content : '';
+
+        if ($maxStringValueLength !== null && mb_strlen($contentString) > $maxStringValueLength) {
+            return mb_substr($contentString, 0, $maxStringValueLength).'…';
+        }
+
+        return $contentString;
     }
 
     private function responseIsJson(HttpResponse $response): bool

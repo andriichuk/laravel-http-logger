@@ -119,14 +119,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Max Body Length
+    | Max String Value Length
     |--------------------------------------------------------------------------
     |
-    | Maximum string length for body values before truncation (ellipsis added).
+    | Maximum length for string values in request/response bodies before
+    | truncation (ellipsis added). Also used to truncate non-JSON response
+    | bodies (e.g. HTML or plain text) when logged. Set to null to disable
+    | truncation (log full length).
     |
     */
 
-    'max_body_length' => 100,
+    'max_string_value_length' => 100,
 
     'message_prefix' => '[HttpLogger] ',
 
@@ -141,4 +144,18 @@ return [
     */
 
     'include_host_in_message' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Include Session Errors in Log Context
+    |--------------------------------------------------------------------------
+    |
+    | When true, and the request has a session with flashed validation errors
+    | (e.g. from redirect()->back()->withErrors()), add a "session_errors"
+    | key to the log context. Errors are read only and remain available for
+    | the client on the next request.
+    |
+    */
+
+    'include_session_errors' => false,
 ];

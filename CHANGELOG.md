@@ -2,6 +2,18 @@
 
 All notable changes to `laravel-http-logger` will be documented in this file.
 
+## 0.1.3 - 2025-03-08
+
+### Added
+
+- Option `include_session_errors` (default `false`) to add flashed validation errors (e.g. from form redirects) to log context as `session_errors`. Read-only; does not consume flash.
+
+### Changed
+
+- Config key `max_body_length` renamed to `max_string_value_length` (max length for string values and non-JSON response body). Set to `null` to disable truncation.
+- Non-JSON response bodies (HTML, plain text) are now logged with truncation when `include_response` is true; previously they were logged as `'skipped'`.
+- README: requirements, env vars, config defaults, response body behavior, and example context notes.
+
 ## 0.1.2 - 2025-03-08
 
 ### Added

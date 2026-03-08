@@ -5,9 +5,11 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/andriichuk/laravel-http-logger/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/andriichuk/laravel-http-logger/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/andriichuk/laravel-http-logger.svg?style=flat-square)](https://packagist.org/packages/andriichuk/laravel-http-logger)
 
-A configurable HTTP request and response logger for Laravel, ideal for APIs. Logs requests and responses to a dedicated channel with optional sanitization of sensitive data, route and status filters, and configurable headers.
+A configurable HTTP request and response logger for Laravel, ideal for APIs. Logs requests and responses to a dedicated channel with optional sanitization of sensitive data, route and status filters, configurable headers, and optional inclusion of flashed validation errors (e.g. from form redirects) in the log context.
 
 ## Installation
+
+**Requirements:** PHP 8.3+ and Laravel 11.x or 12.x.
 
 Install the package via Composer:
 
@@ -38,20 +40,25 @@ Add a log channel for HTTP logs in `config/logging.php` (e.g. a dedicated file o
 
 After publishing, configure `config/http-logger.php` as needed.
 
-| Key | Description | Example |
+**Environment variables:** `enabled` and `channel` can be driven by env: set `LOG_HTTP_REQUESTS` (default `false`) to enable logging, and `HTTP_LOG_CHANNEL` (default `'http'`) for the log channel name.
+
+| Key | Description | Default |
 |-----|-------------|---------|
-| `enabled` | Master switch for HTTP logging. | `true` or `env('LOG_HTTP_REQUESTS', false)` |
+| `enabled` | Master switch for HTTP logging. | `false` (or `env('LOG_HTTP_REQUESTS', false)`) |
 | `channel` | Log channel name (must exist in `config/logging.php`). | `'http'` |
-| `routes` | Laravel route patterns to log. Empty `[]` = no routes; `['*']` or `['api/*']` = match all or API only. | `['api/*', 'webhook/*']` |
-| `report` | Which response status categories to log: `info` (1xx), `success` (2xx), `redirect` (3xx), `client_error` (4xx), `server_error` (5xx). | `'client_error' => true` |
+| `routes` | Laravel route patterns to log (with or without leading slash). `[]` = none; `['*']` = all; `['/api/*']` = API only. | `['/api/*']` |
+| `report` | Which response status categories to log: `info` (1xx), `success` (2xx), `redirect` (3xx), `client_error` (4xx), `server_error` (5xx). Each key is a boolean. | `info`/`success`/`redirect` → `false`; `client_error`/`server_error` → `true` |
 | `include_response` | Include response body in log context. | `true` |
-| `include_request_headers` | Request header names (lowercase) to include. | `['x-app-version', 'x-request-id']` |
-| `include_response_headers` | Response header names (lowercase) to include. | `['content-type', 'x-request-id']` |
-| `sensitive_fields` | Request/response body keys to replace with `***`. | `['token', 'password', 'refresh_token']` |
+| `include_request_headers` | Request header names (lowercase) to include. Use `['*']` for all. | `['x-app-version', 'x-device-id', 'x-device-type']` |
+| `include_response_headers` | Response header names (lowercase) to include. Use `['*']` for all. | `[]` |
+| `sensitive_fields` | Request/response body keys to replace with `***`. | `['token', 'refresh_token', 'password', …]` |
 | `sensitive_headers` | Header names (lowercase) to replace with `***`. | `['authorization', 'cookie']` |
-| `max_body_length` | Max string length for body values before truncation. | `100` |
+| `max_string_value_length` | Max length for string values in bodies (and non-JSON response body) before truncation. Use `null` to disable truncation. | `100` |
 | `message_prefix` | Prefix for the log message. | `'[HttpLogger] '` |
 | `include_host_in_message` | Include request origin (protocol + host, e.g. `https://example.com`) in the log message. | `false` |
+| `include_session_errors` | When true, add flashed validation errors (e.g. from `redirect()->withErrors()`) to log context as `session_errors`. Read-only; does not consume flash. | `false` |
+
+**Response body logging:** JSON responses (Content-Type `application/json`) are decoded and sanitized; `max_string_value_length` applies to each string value in the payload. Non-JSON responses (e.g. HTML or plain text) are logged as a single string and truncated when `max_string_value_length` is set.
 
 ### Example log output
 
@@ -67,6 +74,8 @@ Context (example):
     'response' => ['token' => '***', 'user_id' => 1],
 ]
 ```
+
+When `include_response` is `false`, `response` is the string `'skipped'`. When `include_session_errors` is `true` and the request has flashed validation errors, the context also includes a `session_errors` key (e.g. from form redirects).
 
 ### API-focused example
 
@@ -90,13 +99,16 @@ return [
     'include_response_headers' => ['content-type', 'x-request-id'],
     'sensitive_fields' => ['token', 'password', 'refresh_token', 'code'],
     'sensitive_headers' => ['authorization', 'cookie'],
-    'max_body_length' => 100,
+    'max_string_value_length' => 100,
     'message_prefix' => '[HttpLogger] ',
     'include_host_in_message' => false,
+    'include_session_errors' => false,
 ];
 ```
 
 ## Testing
+
+Run the test suite with Pest:
 
 ```bash
 composer test
