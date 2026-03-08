@@ -87,7 +87,7 @@ return [
     | When include_response is true, JSON responses are always decoded and
     | sanitized. When this option is true, non-JSON responses (e.g. HTML or
     | plain text) are also included in the log (truncated by max_string_value_length).
-    | Default false logs non-JSON response body as 'skipped'.
+    | Default false logs non-JSON response body as '[skipped]'.
     |
     */
 

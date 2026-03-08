@@ -123,7 +123,7 @@ it('logs non-JSON response as skipped when include_non_json_response is false', 
     $response = new Response('<html>Hello</html>', 200, ['Content-Type' => 'text/html']);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['context']['response'])->toBe('skipped');
+    expect($logged['context']['response'])->toBe('[skipped]');
 });
 
 it('logs full response and request body when max_string_value_length is null', function () {
@@ -273,7 +273,7 @@ it('logs when client_error is reported and include_response false yields skipped
     $response = new Response('Unauthorized', 401);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['context']['response'])->toBe('skipped');
+    expect($logged['context']['response'])->toBe('[skipped]');
 });
 
 it('masks sensitive fields in request and response', function () {

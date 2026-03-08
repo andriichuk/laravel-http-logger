@@ -5,7 +5,7 @@
 [GitHub Code Style Action Status](https://github.com/andriichuk/laravel-http-logger/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [Total Downloads](https://packagist.org/packages/andriichuk/laravel-http-logger)
 
-A configurable HTTP request and response logger for Laravel, ideal for APIs.
+A **super simple**, configurable HTTP request and response logger for Laravel, ideal for APIs.
 
 - **Sanitization** — Mask sensitive fields and headers (e.g. password, authorization).
 - **Filters** — Limit by route patterns and response status (2xx, 4xx, 5xx, etc.).
@@ -56,7 +56,7 @@ After publishing, configure `config/http-logger.php` as needed.
 | `report`                          | Which response status categories to log: `info` (1xx), `success` (2xx), `redirect` (3xx), `client_error` (4xx), `server_error` (5xx). Each key is a boolean.    | `info`/`success` → `false`; `redirect`/`client_error`/`server_error` → `true` |
 | `log_level_by_status`             | Map each status category to a PSR log level (`debug`, `info`, `notice`, `warning`, `error`, etc.). 5xx → `error` and 4xx → `warning` by default for easier filtering. | `client_error` → `warning`; `server_error` → `error`; others → `info`         |
 | `include_response`                | Include response body in log context.                                                                                                                           | `true`                                                                        |
-| `include_non_json_response`       | When `include_response` is true, include non-JSON bodies (HTML, text, etc.) in the log (truncated). Set to `true` to include them; default logs as `'skipped'`. | `false`                                                                       |
+| `include_non_json_response`       | When `include_response` is true, include non-JSON bodies (HTML, text, etc.) in the log (truncated). Set to `true` to include them; default logs as `'[skipped]'`. | `false`                                                                       |
 | `include_request_headers`         | Request header names (lowercase) to include. Use `['*']` for all.                                                                                               | `['*']`                                                                       |
 | `include_response_headers`        | Response header names (lowercase) to include. Use `['*']` for all.                                                                                              | `[]`                                                                          |
 | `sensitive_fields`                | Request/response body keys to replace with `***`.                                                                                                               | `['token', 'refresh_token', 'password', …]`                                   |
@@ -68,59 +68,26 @@ After publishing, configure `config/http-logger.php` as needed.
 | `include_uploaded_files_metadata` | When true, add metadata for uploaded files (original name, size, MIME type, extension) to log context as `uploaded_files`. No file contents are logged.         | `true`                                                                        |
 
 
-**Response body logging:** JSON responses (Content-Type `application/json`) are decoded and sanitized; `max_string_value_length` applies to each string value in the payload. Non-JSON responses (e.g. HTML or plain text) are logged as a single string and truncated when `max_string_value_length` is set.
+**Response body logging:** JSON responses are decoded and sanitized; `max_string_value_length` applies to each string value. Non-JSON responses are logged as a truncated string or `'[skipped]'`. The log **level** follows response status by default (5xx → `error`, 4xx → `warning`, 1xx/2xx/3xx → `info`); configure via `log_level_by_status`.
 
 ### Example log output
 
-Message: `[HttpLogger] POST /api/login`
+**API validation error (422):** `WARNING` level, authorization and cookie masked, JSON response with validation errors.
 
-Context (example):
-
-```php
-[
-    'status_code' => 200,
-    'request_headers' => ['content-type' => ['application/json']],
-    'response_headers' => ['content-type' => ['application/json']],
-    'request' => ['email' => 'user@example.com', 'password' => '***'],
-    'response' => ['token' => '***', 'user_id' => 1],
-]
+```
+[2026-03-08 12:02:01] local.WARNING: [HttpLogger] POST /api/autologin {"status_code":422,"request_headers":{"host":["api.example.com"],"content-type":["application/json"],"authorization":"***","cookie":"***"},"response_headers":[],"request":{"device":{"id":"device-hash","app_version":"1.0.0","model":"Pixel 10","platform":"android","os_version":"12.0.0"}},"response":{"message":"The device.locale field is required.","errors":{"device.locale":["The device.locale field is required."]}}}
 ```
 
-The log **level** is chosen by response status: 5xx → `error`, 4xx → `warning`, and 1xx/2xx/3xx → `info` by default (configurable via `log_level_by_status`). When `include_response` is `false`, `response` is the string `'skipped'`. When `include_session_errors` is `true` and the request has flashed validation errors, the context also includes a `session_errors` key (e.g. from form redirects). When `include_uploaded_files_metadata` is `true` and the request contains file uploads, the context includes an `uploaded_files` key with metadata for each file (name, original_name, size, mime_type, extension, error).
+**API file upload validation error (422):** `WARNING` level, file input shown as `[object]` in request body, `uploaded_files` metadata (name, size, mime_type, etc.) in context, validation errors in English.
 
-### API-focused example
+```
+[2026-03-08 12:12:45] testing.WARNING: [HttpLogger] POST /api/profile/avatar {"status_code":422,"request_headers":{"host":["example.test"],"content-type":["application/x-www-form-urlencoded"],"x-app-version":["1.0.0"]},"response_headers":[],"request":{"avatar":"[object]"},"response":{"message":"The profile photo field must be an image. (and 1 more error)","errors":{"avatar":["The profile photo field must be an image.","The profile photo field must be a file of type: jpeg, jpg, png, gif, webp."]}},"uploaded_files":[{"name":"avatar","original_name":"document.pdf","size":102400,"mime_type":"application/pdf","extension":"pdf","error":0}]}
+```
 
-Log only API routes and 4xx/5xx responses, with masked auth and cookies:
+**Web auth form (redirect with flash):** `INFO` level, sensitive headers and fields masked, non-JSON response skipped, `session_errors` with flashed validation message (e.g. login failure). Set `include_session_errors` to `true` in config to get `session_errors` in the log.
 
-```php
-// config/http-logger.php
-return [
-    'enabled' => true,
-    'channel' => 'http',
-    'routes' => ['api/*'],
-    'report' => [
-        'info' => false,
-        'success' => false,
-        'redirect' => false,
-        'client_error' => true,
-        'server_error' => true,
-    ],
-    'log_level_by_status' => [
-        'client_error' => 'warning',
-        'server_error' => 'error',
-    ],
-    'include_response' => true,
-    'include_non_json_response' => true,
-    'include_request_headers' => ['content-type', 'x-request-id'],
-    'include_response_headers' => ['content-type', 'x-request-id'],
-    'sensitive_fields' => ['token', 'password', 'refresh_token', 'code'],
-    'sensitive_headers' => ['authorization', 'cookie'],
-    'max_string_value_length' => 100,
-    'message_prefix' => '[HttpLogger] ',
-    'include_host_in_message' => false,
-    'include_session_errors' => false,
-    'include_uploaded_files_metadata' => true,
-];
+```
+[2026-03-08 12:25:04] local.INFO: [HttpLogger] POST /login {"status_code":302,"request_headers":{"host":["example.test"],"content-type":["application/x-www-form-urlencoded"],"cookie":"***"},"response_headers":[],"request":{"_token":"***","email":"user@example.com","password":"***"},"response":"[skipped]","session_errors":{"email":["These credentials do not match our records."]}}
 ```
 
 ## Testing

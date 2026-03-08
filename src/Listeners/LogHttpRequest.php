@@ -76,7 +76,7 @@ final readonly class LogHttpRequest
 
         $responseBody = $this->config['include_response']
             ? $this->formatResponseBodyForLogging($event->response, $sensitiveFields, $maxStringValueLength)
-            : 'skipped';
+            : '[skipped]';
 
         $message = $this->config['message_prefix'].$event->request->method().' ';
 
@@ -104,6 +104,7 @@ final readonly class LogHttpRequest
 
         if ($this->config['include_uploaded_files_metadata'] ?? true) {
             $filesMeta = $this->getUploadedFilesMetadata($event->request);
+            
             if ($filesMeta !== []) {
                 $context['uploaded_files'] = $filesMeta;
             }
@@ -263,7 +264,7 @@ final readonly class LogHttpRequest
         }
 
         if (! ($this->config['include_non_json_response'] ?? false)) {
-            return 'skipped';
+            return '[skipped]';
         }
 
         $contentString = is_string($content) ? $content : '';
