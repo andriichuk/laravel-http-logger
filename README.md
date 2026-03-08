@@ -47,8 +47,9 @@ php artisan vendor:publish --tag="http-logger-config"
 ## Configuration
 
 After publishing, configure `config/http-logger.php` as needed.
-                                                                                                       | Default                                                                       |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+
+| Key | Description | Default |
+| --- | --- | --- |
 | `enabled`                         | Master switch for HTTP logging. When `LOG_HTTP_REQUESTS` is unset, falls back to `APP_DEBUG`.                                                                   | `env('LOG_HTTP_REQUESTS', APP_DEBUG)`                                         |
 | `channel`                         | Log channel name (must exist in `config/logging.php`).                                                                                                          | `HTTP_LOG_CHANNEL` or `LOG_CHANNEL` or `'stack'`                              |
 | `routes`                          | Laravel route patterns to log (with or without leading slash). `[]` = none; `['*']` = all; `['/api/*']` = API only.                                             | `['*']`                                                                       |
