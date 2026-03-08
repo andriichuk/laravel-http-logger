@@ -170,6 +170,7 @@ final readonly class LogHttpRequest
                     'extension' => $value->getClientOriginalExtension() ?: null,
                     'error' => $value->getError(),
                 ];
+
                 continue;
             }
 
