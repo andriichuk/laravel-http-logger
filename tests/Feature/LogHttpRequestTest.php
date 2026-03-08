@@ -63,6 +63,94 @@ it('logs when enabled and route matches', function () {
     expect($logged['context']['response'])->toBeArray();
 });
 
+it('skips response body when include_response is true but response content type is not JSON', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', true);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['message' => $message, 'context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/page', 'GET');
+    $response = new Response('<html>Hello</html>', 200, ['Content-Type' => 'text/html']);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context']['response'])->toBe('skipped');
+});
+
+it('does not include host in log message when include_host_in_message is false', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.message_prefix', '[HttpLogger] ');
+    config()->set('http-logger.include_host_in_message', false);
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message) use (&$logged) {
+        $logged['message'] = $message;
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('https://api.example.com/users', 'GET');
+    $response = new Response('ok', 200);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['message'])->toBe('[HttpLogger] GET /users');
+});
+
+it('includes protocol and host in log message when include_host_in_message is true', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.message_prefix', '[HttpLogger] ');
+    config()->set('http-logger.include_host_in_message', true);
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message) use (&$logged) {
+        $logged['message'] = $message;
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('https://api.example.com/users', 'GET');
+    $response = new Response('ok', 200);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['message'])->toBe('[HttpLogger] GET https://api.example.com /users');
+});
+
 it('skips logging when success is not reported', function () {
     config()->set('http-logger.enabled', true);
     config()->set('http-logger.routes', ['*']);

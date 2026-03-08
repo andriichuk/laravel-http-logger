@@ -51,6 +51,7 @@ After publishing, configure `config/http-logger.php` as needed.
 | `sensitive_headers` | Header names (lowercase) to replace with `***`. | `['authorization', 'cookie']` |
 | `max_body_length` | Max string length for body values before truncation. | `100` |
 | `message_prefix` | Prefix for the log message. | `'[HttpLogger] '` |
+| `include_host_in_message` | Include request origin (protocol + host, e.g. `https://example.com`) in the log message. | `false` |
 
 ### Example log output
 
@@ -91,6 +92,7 @@ return [
     'sensitive_headers' => ['authorization', 'cookie'],
     'max_body_length' => 100,
     'message_prefix' => '[HttpLogger] ',
+    'include_host_in_message' => false,
 ];
 ```
 

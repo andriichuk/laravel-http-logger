@@ -35,7 +35,7 @@ return [
     |
     */
 
-    'routes' => ['*'],
+    'routes' => ['/api/*'],
 
     /*
     |--------------------------------------------------------------------------
@@ -129,4 +129,16 @@ return [
     'max_body_length' => 100,
 
     'message_prefix' => '[HttpLogger] ',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Include Host in Log Message
+    |--------------------------------------------------------------------------
+    |
+    | When true, the log message will include the request URL origin with protocol
+    | (e.g. https://example.com). Format: prefix + method + schemeAndHost + path.
+    |
+    */
+
+    'include_host_in_message' => false,
 ];

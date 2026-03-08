@@ -2,6 +2,17 @@
 
 All notable changes to `laravel-http-logger` will be documented in this file.
 
+## 0.1.2 - 2025-03-08
+
+### Added
+
+- Option `include_host_in_message` (default `false`) to include request origin (protocol + host, e.g. `https://example.com`) in the log message.
+
+### Changed
+
+- Default `routes` config is now `['/api/*']` instead of `['*']`.
+- Response body is only decoded and sanitized when response `Content-Type` is JSON; non-JSON responses are logged as `'skipped'`.
+
 ## 0.1.1 - 2025-03-07
 
 ### Changed

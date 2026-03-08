@@ -9,6 +9,7 @@ use Illuminate\Container\Attributes\Config;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 /**
  * Listens for RequestHandled and logs request/response to the configured channel
@@ -67,7 +68,7 @@ final readonly class LogHttpRequest
 
         $requestBody = $this->sanitizer->sanitize($event->request->all(), $sensitiveFields, $maxBodyLength);
 
-        $responseBody = $this->config['include_response']
+        $responseBody = $this->config['include_response'] && $this->responseIsJson($event->response)
             ? $this->sanitizer->sanitize(
                 json_decode($event->response->getContent(), true) ?? [],
                 $sensitiveFields,
@@ -75,8 +76,16 @@ final readonly class LogHttpRequest
             )
             : 'skipped';
 
+        $message = $this->config['message_prefix'].$event->request->method().' ';
+
+        if ($this->config['include_host_in_message'] ?? false) {
+            $message .= $event->request->getSchemeAndHttpHost().' ';
+        }
+
+        $message .= $event->request->getPathInfo();
+
         Log::channel($this->config['channel'])->info(
-            $this->config['message_prefix'].$event->request->method().' '.$event->request->getPathInfo(),
+            $message,
             [
                 'request_headers' => $requestHeaders,
                 'response_headers' => $responseHeaders,
@@ -84,6 +93,13 @@ final readonly class LogHttpRequest
                 'response' => $responseBody,
             ]
         );
+    }
+
+    private function responseIsJson(HttpResponse $response): bool
+    {
+        $contentType = $response->headers->get('Content-Type');
+
+        return $contentType !== null && str_contains(strtolower($contentType), 'application/json');
     }
 
     /**
