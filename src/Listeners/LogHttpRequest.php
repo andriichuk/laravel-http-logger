@@ -104,7 +104,7 @@ final readonly class LogHttpRequest
 
         if ($this->config['include_uploaded_files_metadata'] ?? true) {
             $filesMeta = $this->getUploadedFilesMetadata($event->request);
-            
+
             if ($filesMeta !== []) {
                 $context['uploaded_files'] = $filesMeta;
             }
