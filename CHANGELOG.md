@@ -2,6 +2,35 @@
 
 All notable changes to `laravel-http-logger` will be documented in this file.
 
+## 0.2.2 - 2025-03-08
+
+### Added
+
+- **`status_code`** — HTTP response status code is now always included in the log context.
+- **`log_level_by_status`** — Config option to map response status categories to PSR log levels (e.g. 5xx → `error`, 4xx → `warning`). Enables filtering and alerting by level in log aggregation.
+
+### Changed
+
+- Logging now uses `Log::log($level, $message, $context)` instead of always `info`. Default mapping: 1xx/2xx/3xx → `info`, 4xx → `warning`, 5xx → `error`.
+
+## 0.2.1 - 2025-03-08
+
+### Fixed
+
+- Config table header in README (missing Key/Description columns).
+
+## 0.2.0 - 2025-03-08
+
+### Added
+
+- **File upload metadata** — Option `include_uploaded_files_metadata` (default `true`) to log uploaded file metadata (name, original_name, size, mime_type, extension, error) in context under `uploaded_files`. No file contents are logged.
+- **APP_DEBUG fallback** — When `LOG_HTTP_REQUESTS` is not set, logging is enabled when `APP_DEBUG=true` and disabled when `APP_DEBUG=false`.
+
+### Changed
+
+- Request body passed to the sanitizer now excludes file inputs (query + body + attributes only) to avoid issues with `UploadedFile` instances.
+- Sanitizer treats object values as `[object]` instead of casting to array (avoids recursion on file objects).
+
 ## 0.1.3 - 2025-03-08
 
 ### Added

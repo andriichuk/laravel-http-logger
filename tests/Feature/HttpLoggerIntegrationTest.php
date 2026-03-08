@@ -19,7 +19,7 @@ it('logs request and response end-to-end when event is fired', function () {
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['message' => $message, 'context' => $context];
 
         return true;
@@ -34,7 +34,7 @@ it('logs request and response end-to-end when event is fired', function () {
 
     expect($logged)->not->toBeEmpty();
     expect($logged['message'])->toBe('[HttpLogger] POST /api/items');
-    expect($logged['context'])->toHaveKeys(['request_headers', 'response_headers', 'request', 'response']);
+    expect($logged['context'])->toHaveKeys(['status_code', 'request_headers', 'response_headers', 'request', 'response']);
     expect($logged['context']['request'])->toBeArray();
     expect($logged['context']['response'])->toBeArray();
     expect($logged['context']['response'])->toHaveKey('id');

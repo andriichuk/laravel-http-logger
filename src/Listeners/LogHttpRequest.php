@@ -86,7 +86,9 @@ final readonly class LogHttpRequest
 
         $message .= $event->request->getPathInfo();
 
+        $statusCode = $event->response->getStatusCode();
         $context = [
+            'status_code' => $statusCode,
             'request_headers' => $requestHeaders,
             'response_headers' => $responseHeaders,
             'request' => $requestBody,
@@ -107,7 +109,40 @@ final readonly class LogHttpRequest
             }
         }
 
-        Log::channel($this->config['channel'])->info($message, $context);
+        $level = $this->getLogLevelForResponse($event->response);
+        Log::channel($this->config['channel'])->log($level, $message, $context);
+    }
+
+    /**
+     * PSR log level for the given response based on status category.
+     */
+    private function getLogLevelForResponse(HttpResponse $response): string
+    {
+        $map = $this->config['log_level_by_status'] ?? [
+            'info' => 'info',
+            'success' => 'info',
+            'redirect' => 'info',
+            'client_error' => 'warning',
+            'server_error' => 'error',
+        ];
+
+        if ($response->isInformational()) {
+            return $map['info'] ?? 'info';
+        }
+        if ($response->isSuccessful()) {
+            return $map['success'] ?? 'info';
+        }
+        if ($response->isRedirection()) {
+            return $map['redirect'] ?? 'info';
+        }
+        if ($response->isClientError()) {
+            return $map['client_error'] ?? 'warning';
+        }
+        if ($response->isServerError()) {
+            return $map['server_error'] ?? 'error';
+        }
+
+        return 'info';
     }
 
     /**

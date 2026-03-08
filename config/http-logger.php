@@ -57,6 +57,26 @@ return [
         'server_error' => true,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Log Level by Response Status
+    |--------------------------------------------------------------------------
+    |
+    | Map each response status category to a PSR log level. Used so 4xx/5xx
+    | can be logged as warning/error for easier filtering. Keys match 'report':
+    | info, success, redirect, client_error, server_error. Levels: debug, info,
+    | notice, warning, error, critical, alert, emergency.
+    |
+    */
+
+    'log_level_by_status' => [
+        'info' => 'info',
+        'success' => 'info',
+        'redirect' => 'info',
+        'client_error' => 'warning',
+        'server_error' => 'error',
+    ],
+
     'include_response' => true,
 
     /*

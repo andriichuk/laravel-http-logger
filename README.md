@@ -54,11 +54,12 @@ After publishing, configure `config/http-logger.php` as needed.
 | `channel`                         | Log channel name (must exist in `config/logging.php`).                                                                                                          | `HTTP_LOG_CHANNEL` or `LOG_CHANNEL` or `'stack'`                              |
 | `routes`                          | Laravel route patterns to log (with or without leading slash). `[]` = none; `['*']` = all; `['/api/*']` = API only.                                             | `['*']`                                                                       |
 | `report`                          | Which response status categories to log: `info` (1xx), `success` (2xx), `redirect` (3xx), `client_error` (4xx), `server_error` (5xx). Each key is a boolean.    | `info`/`success` → `false`; `redirect`/`client_error`/`server_error` → `true` |
+| `log_level_by_status`             | Map each status category to a PSR log level (`debug`, `info`, `notice`, `warning`, `error`, etc.). 5xx → `error` and 4xx → `warning` by default for easier filtering. | `client_error` → `warning`; `server_error` → `error`; others → `info`         |
 | `include_response`                | Include response body in log context.                                                                                                                           | `true`                                                                        |
 | `include_non_json_response`       | When `include_response` is true, include non-JSON bodies (HTML, text, etc.) in the log (truncated). Set to `true` to include them; default logs as `'skipped'`. | `false`                                                                       |
 | `include_request_headers`         | Request header names (lowercase) to include. Use `['*']` for all.                                                                                               | `['*']`                                                                       |
 | `include_response_headers`        | Response header names (lowercase) to include. Use `['*']` for all.                                                                                              | `[]`                                                                          |
-| `sensitive_fields`                | Request/response body keys to replace with `*`**.                                                                                                               | `['token', 'refresh_token', 'password', …]`                                   |
+| `sensitive_fields`                | Request/response body keys to replace with `***`.                                                                                                               | `['token', 'refresh_token', 'password', …]`                                   |
 | `sensitive_headers`               | Header names (lowercase) to replace with `***`.                                                                                                                 | `['authorization', 'cookie']`                                                 |
 | `max_string_value_length`         | Max length for string values in bodies (and non-JSON response body) before truncation. Use `null` to disable truncation.                                        | `100`                                                                         |
 | `message_prefix`                  | Prefix for the log message.                                                                                                                                     | `'[HttpLogger] '`                                                             |
@@ -77,6 +78,7 @@ Context (example):
 
 ```php
 [
+    'status_code' => 200,
     'request_headers' => ['content-type' => ['application/json']],
     'response_headers' => ['content-type' => ['application/json']],
     'request' => ['email' => 'user@example.com', 'password' => '***'],
@@ -84,7 +86,7 @@ Context (example):
 ]
 ```
 
-When `include_response` is `false`, `response` is the string `'skipped'`. When `include_session_errors` is `true` and the request has flashed validation errors, the context also includes a `session_errors` key (e.g. from form redirects). When `include_uploaded_files_metadata` is `true` and the request contains file uploads, the context includes an `uploaded_files` key with metadata for each file (name, original_name, size, mime_type, extension, error).
+The log **level** is chosen by response status: 5xx → `error`, 4xx → `warning`, and 1xx/2xx/3xx → `info` by default (configurable via `log_level_by_status`). When `include_response` is `false`, `response` is the string `'skipped'`. When `include_session_errors` is `true` and the request has flashed validation errors, the context also includes a `session_errors` key (e.g. from form redirects). When `include_uploaded_files_metadata` is `true` and the request contains file uploads, the context includes an `uploaded_files` key with metadata for each file (name, original_name, size, mime_type, extension, error).
 
 ### API-focused example
 
@@ -102,6 +104,10 @@ return [
         'redirect' => false,
         'client_error' => true,
         'server_error' => true,
+    ],
+    'log_level_by_status' => [
+        'client_error' => 'warning',
+        'server_error' => 'error',
     ],
     'include_response' => true,
     'include_non_json_response' => true,

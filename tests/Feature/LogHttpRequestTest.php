@@ -48,8 +48,8 @@ it('logs when enabled and route matches', function () {
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
-        $logged = ['message' => $message, 'context' => $context];
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
+        $logged = ['level' => $level, 'message' => $message, 'context' => $context];
 
         return true;
     });
@@ -60,8 +60,10 @@ it('logs when enabled and route matches', function () {
     $response = new Response('{"data":[]}', 200, ['Content-Type' => 'application/json']);
     $listener->handle(new RequestHandled($request, $response));
 
+    expect($logged['level'])->toBe('info');
     expect($logged['message'])->toBe('[HttpLogger] GET /api/users');
-    expect($logged['context'])->toHaveKeys(['request_headers', 'response_headers', 'request', 'response']);
+    expect($logged['context'])->toHaveKeys(['status_code', 'request_headers', 'response_headers', 'request', 'response']);
+    expect($logged['context']['status_code'])->toBe(200);
     expect($logged['context']['response'])->toBeArray();
 });
 
@@ -80,8 +82,8 @@ it('logs non-JSON response body (HTML or text) with truncation when include_resp
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
-        $logged = ['message' => $message, 'context' => $context];
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
+        $logged = ['context' => $context];
 
         return true;
     });
@@ -109,7 +111,7 @@ it('logs non-JSON response as skipped when include_non_json_response is false', 
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['context' => $context];
 
         return true;
@@ -139,7 +141,7 @@ it('logs full response and request body when max_string_value_length is null', f
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['message' => $message, 'context' => $context];
 
         return true;
@@ -171,7 +173,7 @@ it('does not include host in log message when include_host_in_message is false',
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message) use (&$logged) {
         $logged['message'] = $message;
 
         return true;
@@ -201,7 +203,7 @@ it('includes protocol and host in log message when include_host_in_message is tr
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message) use (&$logged) {
         $logged['message'] = $message;
 
         return true;
@@ -222,7 +224,7 @@ it('skips logging when success is not reported', function () {
     config()->set('http-logger.report.success', false);
 
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldNotReceive('info');
+    $mockChannel->shouldNotReceive('log');
     Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
 
     $listener = $this->app->make(LogHttpRequest::class);
@@ -237,7 +239,7 @@ it('skips logging when redirect is not reported', function () {
     config()->set('http-logger.report.redirect', false);
 
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldNotReceive('info');
+    $mockChannel->shouldNotReceive('log');
     Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
 
     $listener = $this->app->make(LogHttpRequest::class);
@@ -259,7 +261,7 @@ it('logs when client_error is reported and include_response false yields skipped
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($msg, $ctx) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $msg, $ctx) use (&$logged) {
         $logged = ['message' => $msg, 'context' => $ctx];
 
         return true;
@@ -286,7 +288,7 @@ it('masks sensitive fields in request and response', function () {
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($msg, $ctx) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $msg, $ctx) use (&$logged) {
         $logged = ['context' => $ctx];
 
         return true;
@@ -315,7 +317,7 @@ it('includes only configured request and response headers and masks sensitive on
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($msg, $ctx) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $msg, $ctx) use (&$logged) {
         $logged = ['context' => $ctx];
 
         return true;
@@ -348,7 +350,7 @@ it('includes all request and response headers when wildcard (*) is set', functio
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($msg, $ctx) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $msg, $ctx) use (&$logged) {
         $logged = ['context' => $ctx];
 
         return true;
@@ -385,7 +387,7 @@ it('does not add session_errors to context when include_session_errors is false'
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['context' => $context];
 
         return true;
@@ -422,7 +424,7 @@ it('adds session_errors to context when include_session_errors is true and sessi
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['context' => $context];
 
         return true;
@@ -456,7 +458,7 @@ it('does not add session_errors key when include_session_errors is true but sess
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['context' => $context];
 
         return true;
@@ -485,7 +487,7 @@ it('adds uploaded_files metadata to context when request has file uploads and in
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['context' => $context];
 
         return true;
@@ -525,7 +527,7 @@ it('does not add uploaded_files to context when include_uploaded_files_metadata 
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['context' => $context];
 
         return true;
@@ -555,7 +557,7 @@ it('does not add uploaded_files key when request has no file uploads', function 
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['context' => $context];
 
         return true;
@@ -584,7 +586,7 @@ it('logs metadata for multiple uploaded files and nested file inputs', function 
 
     $logged = [];
     $mockChannel = Mockery::mock();
-    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $message, $context) use (&$logged) {
         $logged = ['context' => $context];
 
         return true;
@@ -609,4 +611,75 @@ it('logs metadata for multiple uploaded files and nested file inputs', function 
     expect($names)->toContain('avatar');
     expect($names)->toContain(0, 1); // nested array keys for attachments
     expect($originalNames)->toContain('avatar.jpg', 'a.txt', 'b.pdf');
+});
+
+it('includes status_code in log context', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.client_error', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('log')->once()->withArgs(function ($level, $msg, $ctx) use (&$logged) {
+        $logged = ['level' => $level, 'context' => $ctx];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/not-found', 'GET');
+    $response = new Response('Not Found', 404);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context'])->toHaveKey('status_code');
+    expect($logged['context']['status_code'])->toBe(404);
+});
+
+it('logs 5xx responses at error level and 2xx at info level', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.report.server_error', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.log_level_by_status', [
+        'info' => 'info',
+        'success' => 'info',
+        'redirect' => 'info',
+        'client_error' => 'warning',
+        'server_error' => 'error',
+    ]);
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $loggedSuccess = [];
+    $loggedError = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('log')->twice()->withArgs(function ($level, $msg, $ctx) use (&$loggedSuccess, &$loggedError) {
+        if ($ctx['status_code'] === 200) {
+            $loggedSuccess['level'] = $level;
+        }
+        if ($ctx['status_code'] === 500) {
+            $loggedError['level'] = $level;
+        }
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $listener->handle(new RequestHandled(Request::create('/api/ok', 'GET'), new Response('ok', 200)));
+    $listener->handle(new RequestHandled(Request::create('/api/fail', 'GET'), new Response('Server Error', 500)));
+
+    expect($loggedSuccess['level'])->toBe('info');
+    expect($loggedError['level'])->toBe('error');
 });
