@@ -1,9 +1,9 @@
 # Laravel HTTP Logger
 
-[Latest Version on Packagist](https://packagist.org/packages/andriichuk/laravel-http-logger)
-[GitHub Tests Action Status](https://github.com/andriichuk/laravel-http-logger/actions?query=workflow%3Arun-tests+branch%3Amain)
-[GitHub Code Style Action Status](https://github.com/andriichuk/laravel-http-logger/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[Total Downloads](https://packagist.org/packages/andriichuk/laravel-http-logger)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/andriichuk/laravel-http-logger.svg?style=flat-square)](https://packagist.org/packages/andriichuk/laravel-http-logger)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/andriichuk/laravel-http-logger/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/andriichuk/laravel-http-logger/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/andriichuk/laravel-http-logger/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/andriichuk/laravel-http-logger/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![Total Downloads](https://img.shields.io/packagist/dt/andriichuk/laravel-http-logger.svg?style=flat-square)](https://packagist.org/packages/andriichuk/laravel-http-logger)
 
 A **super simple**, configurable HTTP request and response logger for Laravel, ideal for APIs.
 
@@ -29,7 +29,7 @@ Publish the config file:
 php artisan vendor:publish --tag="http-logger-config"
 ```
 
-(Optional) Add a dedicated log channel for HTTP logs in `config/logging.php` (e.g. a dedicated file or stack). If you skip this, the package uses your default log channel.
+(Optional) Add a dedicated log channel for HTTP logs in `config/logging.php` (e.g. a separate file or stack). If you skip this, the package uses your default log channel.
 
 ```php
 'channels' => [
@@ -51,7 +51,7 @@ After publishing, configure `config/http-logger.php` as needed.
 | Key | Description | Default |
 | --- | --- | --- |
 | `enabled`                         | Master switch for HTTP logging. When `LOG_HTTP_REQUESTS` is unset, falls back to `APP_DEBUG`.                                                                   | `env('LOG_HTTP_REQUESTS', APP_DEBUG)`                                         |
-| `channel`                         | Log channel name (must exist in `config/logging.php`).                                                                                                          | `HTTP_LOG_CHANNEL` or `LOG_CHANNEL` or `'stack'`                              |
+| `channel`                         | Log channel name (must exist in `config/logging.php`).                                                                                                          | `HTTP_LOG_CHANNEL` or `LOG_CHANNEL` or `'daily'`                              |
 | `routes`                          | Laravel route patterns to log (with or without leading slash). `[]` = none; `['*']` = all; `['/api/*']` = API only.                                             | `['*']`                                                                       |
 | `report`                          | Which response status categories to log: `info` (1xx), `success` (2xx), `redirect` (3xx), `client_error` (4xx), `server_error` (5xx). Each key is a boolean.    | `info`/`success` → `false`; `redirect`/`client_error`/`server_error` → `true` |
 | `log_level_by_status`             | Map each status category to a PSR log level (`debug`, `info`, `notice`, `warning`, `error`, etc.). 5xx → `error` and 4xx → `warning` by default for easier filtering. | `client_error` → `warning`; `server_error` → `error`; others → `info`         |
@@ -75,16 +75,16 @@ After publishing, configure `config/http-logger.php` as needed.
 **API validation error (422):** `WARNING` level, authorization and cookie masked, JSON response with validation errors.
 
 ```
-[2026-03-08 12:02:01] local.WARNING: [HttpLogger] POST /api/autologin {"status_code":422,"request_headers":{"host":["api.example.com"],"content-type":["application/json"],"authorization":"***","cookie":"***"},"response_headers":[],"request":{"device":{"id":"device-hash","app_version":"1.0.0","model":"Pixel 10","platform":"android","os_version":"12.0.0"}},"response":{"message":"The device.locale field is required.","errors":{"device.locale":["The device.locale field is required."]}}}
+[2026-03-08 12:02:01] local.WARNING: [HttpLogger] POST /v1/guest/autologin {"status_code":422,"request_headers":{"host":["api.example.com"],"content-type":["application/json"],"authorization":"***","cookie":"***"},"response_headers":[],"request":{"device":{"id":"device-hash","app_version":"1.0.0","model":"Pixel 10","platform":"android","os_version":"12.0.0"}},"response":{"message":"The device.locale field is required.","errors":{"device.locale":["The device.locale field is required."]}}}
 ```
 
-**API file upload validation error (422):** `WARNING` level, file input shown as `[object]` in request body, `uploaded_files` metadata (name, size, mime_type, etc.) in context, validation errors in English.
+**API file upload validation error (422):** `WARNING` level, file input shown as `[object]` in request body, `uploaded_files` metadata (name, size, mime_type, etc.) in context.
 
 ```
 [2026-03-08 12:12:45] testing.WARNING: [HttpLogger] POST /api/profile/avatar {"status_code":422,"request_headers":{"host":["example.test"],"content-type":["application/x-www-form-urlencoded"],"x-app-version":["1.0.0"]},"response_headers":[],"request":{"avatar":"[object]"},"response":{"message":"The profile photo field must be an image. (and 1 more error)","errors":{"avatar":["The profile photo field must be an image.","The profile photo field must be a file of type: jpeg, jpg, png, gif, webp."]}},"uploaded_files":[{"name":"avatar","original_name":"document.pdf","size":102400,"mime_type":"application/pdf","extension":"pdf","error":0}]}
 ```
 
-**Web auth form (redirect with flash):** `INFO` level, sensitive headers and fields masked, non-JSON response skipped, `session_errors` with flashed validation message (e.g. login failure). Set `include_session_errors` to `true` in config to get `session_errors` in the log.
+**Web auth form (redirect with flash):** `INFO` level, sensitive headers and fields masked, non-JSON response logged as `[skipped]`, `session_errors` with flashed validation message (e.g. login failure). Set `include_session_errors` to `true` in your config to get `session_errors` in the log.
 
 ```
 [2026-03-08 12:25:04] local.INFO: [HttpLogger] POST /login {"status_code":302,"request_headers":{"host":["example.test"],"content-type":["application/x-www-form-urlencoded"],"cookie":"***"},"response_headers":[],"request":{"_token":"***","email":"user@example.com","password":"***"},"response":"[skipped]","session_errors":{"email":["These credentials do not match our records."]}}
