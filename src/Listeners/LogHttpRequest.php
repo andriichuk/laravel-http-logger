@@ -7,8 +7,10 @@ namespace Andriichuk\HttpLogger\Listeners;
 use Andriichuk\HttpLogger\Sanitizer;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Foundation\Http\Events\RequestHandled;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 /**
@@ -67,7 +69,7 @@ final readonly class LogHttpRequest
         $maxStringValueLength = $this->config['max_string_value_length'] ?? null;
 
         $requestBody = $this->sanitizer->sanitize(
-            $event->request->all(),
+            $this->getRequestInputWithoutFiles($event->request),
             $sensitiveFields,
             $maxStringValueLength ?? PHP_INT_MAX
         );
@@ -98,7 +100,83 @@ final readonly class LogHttpRequest
             }
         }
 
+        if ($this->config['include_uploaded_files_metadata'] ?? true) {
+            $filesMeta = $this->getUploadedFilesMetadata($event->request);
+            if ($filesMeta !== []) {
+                $context['uploaded_files'] = $filesMeta;
+            }
+        }
+
         Log::channel($this->config['channel'])->info($message, $context);
+    }
+
+    /**
+     * Get request input (query + body + attributes) without file inputs, so the
+     * sanitizer is not given UploadedFile instances.
+     *
+     * @return array<string, mixed>
+     */
+    private function getRequestInputWithoutFiles(mixed $request): array
+    {
+        if (! method_exists($request, 'query') || ! method_exists($request, 'request')) {
+            return method_exists($request, 'all') ? $request->all() : [];
+        }
+
+        $query = $request->query->all();
+        $body = $request->request->all();
+        $attributes = isset($request->attributes) && $request->attributes !== null
+            ? $request->attributes->all()
+            : [];
+
+        return array_merge($query, $body, $attributes);
+    }
+
+    /**
+     * Extract metadata from uploaded files (name, size, MIME type, extension).
+     * Supports single and multiple file inputs; no file contents are included.
+     *
+     * @return array<int, array{name: string, original_name: string, size: int|null, mime_type: string|null, extension: string|null, error: int}>
+     */
+    private function getUploadedFilesMetadata(mixed $request): array
+    {
+        if (! method_exists($request, 'allFiles')) {
+            return [];
+        }
+
+        $files = $request->allFiles();
+        if (! is_array($files) || $files === []) {
+            return [];
+        }
+
+        $meta = [];
+        $this->collectFileMetadata($files, $meta);
+
+        return $meta;
+    }
+
+    /**
+     * @param  array<string, mixed>  $files
+     * @param  array<int, array{name: string, original_name: string, size: int|null, mime_type: string|null, extension: string|null, error: int}>  $meta
+     */
+    private function collectFileMetadata(array $files, array &$meta): void
+    {
+        foreach ($files as $inputName => $value) {
+            if ($value instanceof UploadedFile || $value instanceof SymfonyUploadedFile) {
+                $meta[] = [
+                    'name' => $inputName,
+                    'original_name' => $value->getClientOriginalName(),
+                    'size' => $value->getSize() ?: null,
+                    'mime_type' => $value->getMimeType() ?: null,
+                    'extension' => $value->getClientOriginalExtension() ?: null,
+                    'error' => $value->getError(),
+                ];
+                continue;
+            }
+
+            if (is_array($value)) {
+                $this->collectFileMetadata($value, $meta);
+            }
+        }
     }
 
     /**
@@ -119,8 +197,10 @@ final readonly class LogHttpRequest
             return [];
         }
 
-        if (is_object($errors) && method_exists($errors, 'getMessages')) {
-            return $errors->getMessages();
+        if (is_object($errors) && is_callable([$errors, 'getMessages'])) {
+            $messages = $errors->getMessages();
+
+            return is_array($messages) ? $messages : [];
         }
 
         if (is_array($errors)) {
@@ -144,6 +224,10 @@ final readonly class LogHttpRequest
                 $sensitiveFields,
                 $maxStringValueLength ?? PHP_INT_MAX
             );
+        }
+
+        if (! ($this->config['include_non_json_response'] ?? false)) {
+            return 'skipped';
         }
 
         $contentString = is_string($content) ? $content : '';

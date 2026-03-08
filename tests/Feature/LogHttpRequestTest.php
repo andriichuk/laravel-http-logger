@@ -4,6 +4,7 @@ use Andriichuk\HttpLogger\Listeners\LogHttpRequest;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\MessageBag;
 
@@ -64,12 +65,13 @@ it('logs when enabled and route matches', function () {
     expect($logged['context']['response'])->toBeArray();
 });
 
-it('logs non-JSON response body (HTML or text) with truncation when include_response is true', function () {
+it('logs non-JSON response body (HTML or text) with truncation when include_response and include_non_json_response are true', function () {
     config()->set('http-logger.enabled', true);
     config()->set('http-logger.routes', ['*']);
     config()->set('http-logger.report.success', true);
     config()->set('http-logger.channel', 'http');
     config()->set('http-logger.include_response', true);
+    config()->set('http-logger.include_non_json_response', true);
     config()->set('http-logger.max_string_value_length', 10);
     config()->set('http-logger.include_request_headers', []);
     config()->set('http-logger.include_response_headers', []);
@@ -93,12 +95,42 @@ it('logs non-JSON response body (HTML or text) with truncation when include_resp
     expect($logged['context']['response'])->toBe('<html>Hell…');
 });
 
+it('logs non-JSON response as skipped when include_non_json_response is false', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', true);
+    config()->set('http-logger.include_non_json_response', false);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/page', 'GET');
+    $response = new Response('<html>Hello</html>', 200, ['Content-Type' => 'text/html']);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context']['response'])->toBe('skipped');
+});
+
 it('logs full response and request body when max_string_value_length is null', function () {
     config()->set('http-logger.enabled', true);
     config()->set('http-logger.routes', ['*']);
     config()->set('http-logger.report.success', true);
     config()->set('http-logger.channel', 'http');
     config()->set('http-logger.include_response', true);
+    config()->set('http-logger.include_non_json_response', true);
     config()->set('http-logger.max_string_value_length', null);
     config()->set('http-logger.include_request_headers', []);
     config()->set('http-logger.include_response_headers', []);
@@ -217,6 +249,7 @@ it('skips logging when redirect is not reported', function () {
 it('logs when client_error is reported and include_response false yields skipped', function () {
     config()->set('http-logger.enabled', true);
     config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.channel', 'http');
     config()->set('http-logger.report.client_error', true);
     config()->set('http-logger.include_response', false);
     config()->set('http-logger.include_request_headers', []);
@@ -244,6 +277,7 @@ it('logs when client_error is reported and include_response false yields skipped
 it('masks sensitive fields in request and response', function () {
     config()->set('http-logger.enabled', true);
     config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.channel', 'http');
     config()->set('http-logger.report.success', true);
     config()->set('http-logger.sensitive_fields', ['token', 'password']);
     config()->set('http-logger.include_response', true);
@@ -272,6 +306,7 @@ it('masks sensitive fields in request and response', function () {
 it('includes only configured request and response headers and masks sensitive ones', function () {
     config()->set('http-logger.enabled', true);
     config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.channel', 'http');
     config()->set('http-logger.report.success', true);
     config()->set('http-logger.include_request_headers', ['x-custom', 'authorization']);
     config()->set('http-logger.include_response_headers', ['content-type']);
@@ -304,6 +339,7 @@ it('includes only configured request and response headers and masks sensitive on
 it('includes all request and response headers when wildcard (*) is set', function () {
     config()->set('http-logger.enabled', true);
     config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.channel', 'http');
     config()->set('http-logger.report.success', true);
     config()->set('http-logger.include_request_headers', ['*']);
     config()->set('http-logger.include_response_headers', ['*']);
@@ -433,4 +469,144 @@ it('does not add session_errors key when include_session_errors is true but sess
     $listener->handle(new RequestHandled($request, $response));
 
     expect($logged['context'])->not->toHaveKey('session_errors');
+});
+
+it('adds uploaded_files metadata to context when request has file uploads and include_uploaded_files_metadata is true', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_uploaded_files_metadata', true);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/upload', 'POST');
+    $file = UploadedFile::fake()->create('document.pdf', 1, 'application/pdf'); // 1 KB
+    $request->files->set('document', $file);
+    $response = new Response('ok', 200);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context'])->toHaveKey('uploaded_files');
+    expect($logged['context']['uploaded_files'])->toHaveCount(1);
+    expect($logged['context']['uploaded_files'][0])->toMatchArray([
+        'name' => 'document',
+        'original_name' => 'document.pdf',
+        'mime_type' => 'application/pdf',
+        'extension' => 'pdf',
+        'error' => \UPLOAD_ERR_OK,
+    ]);
+    expect($logged['context']['uploaded_files'][0]['size'])->toBe(1024);
+});
+
+it('does not add uploaded_files to context when include_uploaded_files_metadata is false', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_uploaded_files_metadata', false);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/upload', 'POST');
+    $request->files->set('document', UploadedFile::fake()->create('doc.pdf', 100));
+    $response = new Response('ok', 200);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context'])->not->toHaveKey('uploaded_files');
+});
+
+it('does not add uploaded_files key when request has no file uploads', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_uploaded_files_metadata', true);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/upload', 'POST', ['title' => 'My doc']);
+    $response = new Response('ok', 200);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context'])->not->toHaveKey('uploaded_files');
+});
+
+it('logs metadata for multiple uploaded files and nested file inputs', function () {
+    config()->set('http-logger.enabled', true);
+    config()->set('http-logger.routes', ['*']);
+    config()->set('http-logger.report.success', true);
+    config()->set('http-logger.channel', 'http');
+    config()->set('http-logger.include_response', false);
+    config()->set('http-logger.include_uploaded_files_metadata', true);
+    config()->set('http-logger.include_request_headers', []);
+    config()->set('http-logger.include_response_headers', []);
+    config()->set('http-logger.sensitive_fields', []);
+    config()->set('http-logger.sensitive_headers', []);
+
+    $logged = [];
+    $mockChannel = Mockery::mock();
+    $mockChannel->shouldReceive('info')->once()->withArgs(function ($message, $context) use (&$logged) {
+        $logged = ['context' => $context];
+
+        return true;
+    });
+    Log::shouldReceive('channel')->with('http')->andReturn($mockChannel);
+
+    $listener = $this->app->make(LogHttpRequest::class);
+    $request = Request::create('/api/upload', 'POST');
+    $request->files->set('avatar', UploadedFile::fake()->image('avatar.jpg', 100, 100));
+    $request->files->set('attachments', [
+        UploadedFile::fake()->createWithContent('a.txt', 'hello'),
+        UploadedFile::fake()->create('b.pdf', 200, 'application/pdf'),
+    ]);
+    $response = new Response('ok', 200);
+    $listener->handle(new RequestHandled($request, $response));
+
+    expect($logged['context'])->toHaveKey('uploaded_files');
+    expect($logged['context']['uploaded_files'])->toHaveCount(3);
+
+    $names = array_column($logged['context']['uploaded_files'], 'name');
+    $originalNames = array_column($logged['context']['uploaded_files'], 'original_name');
+    expect($names)->toContain('avatar');
+    expect($names)->toContain(0, 1); // nested array keys for attachments
+    expect($originalNames)->toContain('avatar.jpg', 'a.txt', 'b.pdf');
 });

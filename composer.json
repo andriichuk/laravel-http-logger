@@ -1,6 +1,6 @@
 {
     "name": "andriichuk/laravel-http-logger",
-    "description": "Configurable HTTP request and response logger for Laravel, ideal for APIs.",
+    "description": "Configurable HTTP request and response logger for Laravel, ideal for APIs. Optional file-upload metadata logging.",
     "keywords": ["laravel", "http", "logger", "logging", "http-logger"],
     "homepage": "https://github.com/andriichuk/laravel-http-logger",
     "license": "MIT",

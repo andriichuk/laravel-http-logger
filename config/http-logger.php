@@ -7,11 +7,13 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option controls whether HTTP requests should be logged.
-    | Set to true to enable, or use LOG_HTTP_REQUESTS env variable.
+    | Use LOG_HTTP_REQUESTS in .env to enable or disable explicitly.
+    | When LOG_HTTP_REQUESTS is not set, logging follows APP_DEBUG (enabled
+    | in debug mode, disabled in production).
     |
     */
 
-    'enabled' => env('LOG_HTTP_REQUESTS', false),
+    'enabled' => env('LOG_HTTP_REQUESTS', (bool) env('APP_DEBUG', false)),
 
     /*
     |--------------------------------------------------------------------------
@@ -19,11 +21,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | The log channel to use. Ensure this channel exists in config/logging.php.
-    | Example: add a stack or single channel named "http" in logging.php.
+    | Defaults to HTTP_LOG_CHANNEL, or LOG_CHANNEL, or "daily" if unset.
     |
     */
 
-    'channel' => env('HTTP_LOG_CHANNEL', 'http'),
+    'channel' => env('HTTP_LOG_CHANNEL', env('LOG_CHANNEL', 'daily')),
 
     /*
     |--------------------------------------------------------------------------
@@ -35,7 +37,7 @@ return [
     |
     */
 
-    'routes' => ['/api/*'],
+    'routes' => ['*'],
 
     /*
     |--------------------------------------------------------------------------
@@ -50,12 +52,26 @@ return [
     'report' => [
         'info' => false,
         'success' => false,
-        'redirect' => false,
+        'redirect' => true,
         'client_error' => true,
         'server_error' => true,
     ],
 
     'include_response' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Include Non-JSON Response Body (HTML, text, etc.)
+    |--------------------------------------------------------------------------
+    |
+    | When include_response is true, JSON responses are always decoded and
+    | sanitized. When this option is true, non-JSON responses (e.g. HTML or
+    | plain text) are also included in the log (truncated by max_string_value_length).
+    | Default false logs non-JSON response body as 'skipped'.
+    |
+    */
+
+    'include_non_json_response' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -67,11 +83,7 @@ return [
     |
     */
 
-    'include_request_headers' => [
-        'x-app-version',
-        'x-device-id',
-        'x-device-type',
-    ],
+    'include_request_headers' => ['*'],
 
     /*
     |--------------------------------------------------------------------------
@@ -96,6 +108,7 @@ return [
 
     'sensitive_fields' => [
         'token',
+        '_token',
         'refresh_token',
         'password',
         'confirm_password',
@@ -158,4 +171,17 @@ return [
     */
 
     'include_session_errors' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Include Uploaded Files Metadata
+    |--------------------------------------------------------------------------
+    |
+    | When true, requests that contain file uploads will have uploaded file
+    | metadata (original name, size, MIME type, extension) added to the log
+    | context under the "uploaded_files" key. No file contents are logged.
+    |
+    */
+
+    'include_uploaded_files_metadata' => true,
 ];

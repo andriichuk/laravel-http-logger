@@ -45,8 +45,10 @@ final readonly class Sanitizer
                 $data[$key] = mb_strlen($value) > $max
                     ? mb_substr($value, 0, $max).'…'
                     : $value;
-            } elseif (! is_scalar($value)) {
-                $data[$key] = $this->sanitize((array) $value, $sensitiveFields, $maxLength);
+            } elseif (is_object($value)) {
+                $data[$key] = '[object]';
+            } elseif (is_array($value)) {
+                $data[$key] = $this->sanitize($value, $sensitiveFields, $maxLength);
             }
         }
 
