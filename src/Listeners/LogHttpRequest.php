@@ -7,6 +7,7 @@ namespace Andriichuk\HttpLogger\Listeners;
 use Andriichuk\HttpLogger\Sanitizer;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Foundation\Http\Events\RequestHandled;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -152,17 +153,11 @@ final readonly class LogHttpRequest
      *
      * @return array<string, mixed>
      */
-    private function getRequestInputWithoutFiles(mixed $request): array
+    private function getRequestInputWithoutFiles(Request $request): array
     {
-        if (! method_exists($request, 'query') || ! method_exists($request, 'request')) {
-            return method_exists($request, 'all') ? $request->all() : [];
-        }
-
         $query = $request->query->all();
         $body = $request->request->all();
-        $attributes = isset($request->attributes) && $request->attributes !== null
-            ? $request->attributes->all()
-            : [];
+        $attributes = $request->attributes->all();
 
         return array_merge($query, $body, $attributes);
     }
@@ -173,14 +168,10 @@ final readonly class LogHttpRequest
      *
      * @return array<int, array{name: string, original_name: string, size: int|null, mime_type: string|null, extension: string|null, error: int}>
      */
-    private function getUploadedFilesMetadata(mixed $request): array
+    private function getUploadedFilesMetadata(Request $request): array
     {
-        if (! method_exists($request, 'allFiles')) {
-            return [];
-        }
-
         $files = $request->allFiles();
-        if (! is_array($files) || $files === []) {
+        if ($files === []) {
             return [];
         }
 
@@ -221,9 +212,9 @@ final readonly class LogHttpRequest
      *
      * @return array<string, array<int, string>>
      */
-    private function getFlashedSessionErrors(mixed $request): array
+    private function getFlashedSessionErrors(Request $request): array
     {
-        if (! method_exists($request, 'hasSession') || ! $request->hasSession()) {
+        if (! $request->hasSession()) {
             return [];
         }
 
