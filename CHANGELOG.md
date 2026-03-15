@@ -2,11 +2,18 @@
 
 All notable changes to `laravel-http-logger` will be documented in this file.
 
+## 0.2.6 - 2025-03-15
+
+### Changed
+
+- **Log context keys renamed (breaking):** `status_code` → `response_status_code`, `request` → `request_body`, `response` → `response_body`. Update log consumers and any assertions that rely on these keys.
+- When `include_host_in_message` is enabled, the log message no longer has a trailing space between the host and the path (e.g. `GET https://example.com/users` instead of `GET https://example.com /users`).
+
 ## 0.2.2 - 2025-03-08
 
 ### Added
 
-- **`status_code`** — HTTP response status code is now always included in the log context.
+- **`response_status_code`** — HTTP response status code is now always included in the log context.
 - **`log_level_by_status`** — Config option to map response status categories to PSR log levels (e.g. 5xx → `error`, 4xx → `warning`). Enables filtering and alerting by level in log aggregation.
 
 ### Changed

@@ -34,9 +34,9 @@ it('logs request and response end-to-end when event is fired', function () {
 
     expect($logged)->not->toBeEmpty();
     expect($logged['message'])->toBe('[HttpLogger] POST /api/items');
-    expect($logged['context'])->toHaveKeys(['status_code', 'request_headers', 'response_headers', 'request', 'response']);
-    expect($logged['context']['request'])->toBeArray();
-    expect($logged['context']['response'])->toBeArray();
-    expect($logged['context']['response'])->toHaveKey('id');
-    expect($logged['context']['response']['id'])->toBe(1);
+    expect($logged['context'])->toHaveKeys(['response_status_code', 'request_headers', 'response_headers', 'request_body', 'response_body']);
+    expect($logged['context']['request_body'])->toBeArray();
+    expect($logged['context']['response_body'])->toBeArray();
+    expect($logged['context']['response_body'])->toHaveKey('id');
+    expect($logged['context']['response_body']['id'])->toBe(1);
 });

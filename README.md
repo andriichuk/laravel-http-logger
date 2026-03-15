@@ -75,19 +75,19 @@ After publishing, configure `config/http-logger.php` as needed.
 **API validation error (422):** `WARNING` level, authorization and cookie masked, JSON response with validation errors.
 
 ```
-[2026-03-08 12:02:01] local.WARNING: [HttpLogger] POST /v1/guest/autologin {"status_code":422,"request_headers":{"host":["api.example.com"],"content-type":["application/json"],"authorization":"***","cookie":"***"},"response_headers":[],"request":{"device":{"id":"device-hash","app_version":"1.0.0","model":"Pixel 10","platform":"android","os_version":"12.0.0"}},"response":{"message":"The device.locale field is required.","errors":{"device.locale":["The device.locale field is required."]}}}
+[2026-03-08 12:02:01] local.WARNING: [HttpLogger] POST /v1/guest/autologin {"response_status_code":422,"request_headers":{"host":["api.example.com"],"content-type":["application/json"],"authorization":"***","cookie":"***"},"response_headers":[],"request_body":{"device":{"id":"device-hash","app_version":"1.0.0","model":"Pixel 10","platform":"android","os_version":"12.0.0"}},"response_body":{"message":"The device.locale field is required.","errors":{"device.locale":["The device.locale field is required."]}}}
 ```
 
 **API file upload validation error (422):** `WARNING` level, file input shown as `[object]` in request body, `uploaded_files` metadata (name, size, mime_type, etc.) in context.
 
 ```
-[2026-03-08 12:12:45] testing.WARNING: [HttpLogger] POST /api/profile/avatar {"status_code":422,"request_headers":{"host":["example.test"],"content-type":["application/x-www-form-urlencoded"],"x-app-version":["1.0.0"]},"response_headers":[],"request":{"avatar":"[object]"},"response":{"message":"The profile photo field must be an image. (and 1 more error)","errors":{"avatar":["The profile photo field must be an image.","The profile photo field must be a file of type: jpeg, jpg, png, gif, webp."]}},"uploaded_files":[{"name":"avatar","original_name":"document.pdf","size":102400,"mime_type":"application/pdf","extension":"pdf","error":0}]}
+[2026-03-08 12:12:45] testing.WARNING: [HttpLogger] POST /api/profile/avatar {"response_status_code":422,"request_headers":{"host":["example.test"],"content-type":["application/x-www-form-urlencoded"],"x-app-version":["1.0.0"]},"response_headers":[],"request_body":{"avatar":"[object]"},"response_body":{"message":"The profile photo field must be an image. (and 1 more error)","errors":{"avatar":["The profile photo field must be an image.","The profile photo field must be a file of type: jpeg, jpg, png, gif, webp."]}},"uploaded_files":[{"name":"avatar","original_name":"document.pdf","size":102400,"mime_type":"application/pdf","extension":"pdf","error":0}]}
 ```
 
 **Web auth form (redirect with flash):** `INFO` level, sensitive headers and fields masked, non-JSON response logged as `[skipped]`, `session_errors` with flashed validation message (e.g. login failure). Set `include_session_errors` to `true` in your config to get `session_errors` in the log.
 
 ```
-[2026-03-08 12:25:04] local.INFO: [HttpLogger] POST /login {"status_code":302,"request_headers":{"host":["example.test"],"content-type":["application/x-www-form-urlencoded"],"cookie":"***"},"response_headers":[],"request":{"_token":"***","email":"user@example.com","password":"***"},"response":"[skipped]","session_errors":{"email":["These credentials do not match our records."]}}
+[2026-03-08 12:25:04] local.INFO: [HttpLogger] POST /login {"response_status_code":302,"request_headers":{"host":["example.test"],"content-type":["application/x-www-form-urlencoded"],"cookie":"***"},"response_headers":[],"request_body":{"_token":"***","email":"user@example.com","password":"***"},"response_body":"[skipped]","session_errors":{"email":["These credentials do not match our records."]}}
 ```
 
 ## Testing

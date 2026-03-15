@@ -82,22 +82,23 @@ final readonly class LogHttpRequest
         $message = $this->config['message_prefix'].$event->request->method().' ';
 
         if ($this->config['include_host_in_message'] ?? false) {
-            $message .= $event->request->getSchemeAndHttpHost().' ';
+            $message .= $event->request->getSchemeAndHttpHost();
         }
 
         $message .= $event->request->getPathInfo();
 
         $statusCode = $event->response->getStatusCode();
         $context = [
-            'status_code' => $statusCode,
+            'response_status_code' => $statusCode,
             'request_headers' => $requestHeaders,
             'response_headers' => $responseHeaders,
-            'request' => $requestBody,
-            'response' => $responseBody,
+            'request_body' => $requestBody,
+            'response_body' => $responseBody,
         ];
 
         if ($this->config['include_session_errors'] ?? false) {
             $sessionErrors = $this->getFlashedSessionErrors($event->request);
+            
             if ($sessionErrors !== []) {
                 $context['session_errors'] = $sessionErrors;
             }

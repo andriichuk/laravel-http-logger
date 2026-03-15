@@ -62,9 +62,9 @@ it('logs when enabled and route matches', function () {
 
     expect($logged['level'])->toBe('info');
     expect($logged['message'])->toBe('[HttpLogger] GET /api/users');
-    expect($logged['context'])->toHaveKeys(['status_code', 'request_headers', 'response_headers', 'request', 'response']);
-    expect($logged['context']['status_code'])->toBe(200);
-    expect($logged['context']['response'])->toBeArray();
+    expect($logged['context'])->toHaveKeys(['response_status_code', 'request_headers', 'response_headers', 'request_body', 'response_body']);
+    expect($logged['context']['response_status_code'])->toBe(200);
+    expect($logged['context']['response_body'])->toBeArray();
 });
 
 it('logs non-JSON response body (HTML or text) with truncation when include_response and include_non_json_response are true', function () {
@@ -94,7 +94,7 @@ it('logs non-JSON response body (HTML or text) with truncation when include_resp
     $response = new Response('<html>Hello</html>', 200, ['Content-Type' => 'text/html']);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['context']['response'])->toBe('<html>Hell…');
+    expect($logged['context']['response_body'])->toBe('<html>Hell…');
 });
 
 it('logs non-JSON response as skipped when include_non_json_response is false', function () {
@@ -123,7 +123,7 @@ it('logs non-JSON response as skipped when include_non_json_response is false', 
     $response = new Response('<html>Hello</html>', 200, ['Content-Type' => 'text/html']);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['context']['response'])->toBe('[skipped]');
+    expect($logged['context']['response_body'])->toBe('[skipped]');
 });
 
 it('logs full response and request body when max_string_value_length is null', function () {
@@ -154,8 +154,8 @@ it('logs full response and request body when max_string_value_length is null', f
     $response = new Response($longHtml, 200, ['Content-Type' => 'text/html']);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['context']['response'])->toBe($longHtml);
-    expect($logged['context']['request']['key'])->toBe(str_repeat('y', 300));
+    expect($logged['context']['response_body'])->toBe($longHtml);
+    expect($logged['context']['request_body']['key'])->toBe(str_repeat('y', 300));
 });
 
 it('does not include host in log message when include_host_in_message is false', function () {
@@ -215,7 +215,7 @@ it('includes protocol and host in log message when include_host_in_message is tr
     $response = new Response('ok', 200);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['message'])->toBe('[HttpLogger] GET https://api.example.com /users');
+    expect($logged['message'])->toBe('[HttpLogger] GET https://api.example.com/users');
 });
 
 it('skips logging when success is not reported', function () {
@@ -273,7 +273,7 @@ it('logs when client_error is reported and include_response false yields skipped
     $response = new Response('Unauthorized', 401);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['context']['response'])->toBe('[skipped]');
+    expect($logged['context']['response_body'])->toBe('[skipped]');
 });
 
 it('masks sensitive fields in request and response', function () {
@@ -300,9 +300,9 @@ it('masks sensitive fields in request and response', function () {
     $response = new Response('{"token":"new-secret"}', 200, ['Content-Type' => 'application/json']);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['context']['request']['token'])->toBe('***');
-    expect($logged['context']['request']['email'])->toBe('u@x.com');
-    expect($logged['context']['response']['token'])->toBe('***');
+    expect($logged['context']['request_body']['token'])->toBe('***');
+    expect($logged['context']['request_body']['email'])->toBe('u@x.com');
+    expect($logged['context']['response_body']['token'])->toBe('***');
 });
 
 it('includes only configured request and response headers and masks sensitive ones', function () {
@@ -613,7 +613,7 @@ it('logs metadata for multiple uploaded files and nested file inputs', function 
     expect($originalNames)->toContain('avatar.jpg', 'a.txt', 'b.pdf');
 });
 
-it('includes status_code in log context', function () {
+it('includes response_status_code in log context', function () {
     config()->set('http-logger.enabled', true);
     config()->set('http-logger.routes', ['*']);
     config()->set('http-logger.report.client_error', true);
@@ -638,8 +638,8 @@ it('includes status_code in log context', function () {
     $response = new Response('Not Found', 404);
     $listener->handle(new RequestHandled($request, $response));
 
-    expect($logged['context'])->toHaveKey('status_code');
-    expect($logged['context']['status_code'])->toBe(404);
+    expect($logged['context'])->toHaveKey('response_status_code');
+    expect($logged['context']['response_status_code'])->toBe(404);
 });
 
 it('logs 5xx responses at error level and 2xx at info level', function () {
@@ -665,10 +665,10 @@ it('logs 5xx responses at error level and 2xx at info level', function () {
     $loggedError = [];
     $mockChannel = Mockery::mock();
     $mockChannel->shouldReceive('log')->twice()->withArgs(function ($level, $msg, $ctx) use (&$loggedSuccess, &$loggedError) {
-        if ($ctx['status_code'] === 200) {
+        if ($ctx['response_status_code'] === 200) {
             $loggedSuccess['level'] = $level;
         }
-        if ($ctx['status_code'] === 500) {
+        if ($ctx['response_status_code'] === 500) {
             $loggedError['level'] = $level;
         }
 
