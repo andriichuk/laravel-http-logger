@@ -98,7 +98,7 @@ final readonly class LogHttpRequest
 
         if ($this->config['include_session_errors'] ?? false) {
             $sessionErrors = $this->getFlashedSessionErrors($event->request);
-            
+
             if ($sessionErrors !== []) {
                 $context['session_errors'] = $sessionErrors;
             }
