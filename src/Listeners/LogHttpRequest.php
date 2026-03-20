@@ -193,8 +193,8 @@ final readonly class LogHttpRequest
                 $meta[] = [
                     'name' => $inputName,
                     'original_name' => $value->getClientOriginalName(),
-                    'size' => $value->getSize() ?: null,
-                    'mime_type' => $value->getMimeType() ?: null,
+                    'size' => $this->getUploadedFileSizeForLog($value),
+                    'mime_type' => $this->getUploadedFileMimeTypeForLog($value),
                     'extension' => $value->getClientOriginalExtension() ?: null,
                     'error' => $value->getError(),
                 ];
@@ -205,6 +205,35 @@ final readonly class LogHttpRequest
             if (is_array($value)) {
                 $this->collectFileMetadata($value, $meta);
             }
+        }
+    }
+
+    /**
+     * Size from the temp path. After RequestHandled the file may already be moved or deleted,
+     * so getSize() can throw; treat missing/unreadable files like unknown size.
+     */
+    private function getUploadedFileSizeForLog(UploadedFile|SymfonyUploadedFile $file): ?int
+    {
+        try {
+            $size = $file->getSize();
+
+            return $size ?: null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * MIME from the filesystem. Fails for the same reasons as {@see getUploadedFileSizeForLog()}.
+     */
+    private function getUploadedFileMimeTypeForLog(UploadedFile|SymfonyUploadedFile $file): ?string
+    {
+        try {
+            $mime = $file->getMimeType();
+
+            return $mime !== '' ? $mime : null;
+        } catch (\Throwable) {
+            return null;
         }
     }
 
