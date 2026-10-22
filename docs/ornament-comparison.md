@@ -7,7 +7,7 @@ Four complete README previews for `andriichuk/laravel-http-logger`:
 - [SVG embroidered band](readme-svg-border.md)
 - [PNG signature — identical geometry to the SVG signature](readme-png-signature.md)
 
-The proposed README uses a narrow strip below the badges. These original geometric studies are inspired by Ukrainian cross-stitch embroidery; they do not claim a specific regional provenance.
+The proposed README uses a narrow strip above the title. These original geometric studies are inspired by Ukrainian cross-stitch embroidery; they do not claim a specific regional provenance.
 
 ## Text symbols
 
@@ -57,7 +57,7 @@ File size depends on the ornament: PNG can be smaller for repetitive pixel patte
 
 ## Reuse in another repository
 
-Copy `docs/assets/vyshyvanka-signature-light.svg` and `docs/assets/vyshyvanka-signature-dark.svg`, then place this below the badges in the root README:
+Copy `docs/assets/vyshyvanka-signature-light.svg` and `docs/assets/vyshyvanka-signature-dark.svg`, then place this at the very start of the root README, above the title:
 
 ```html
 <picture>
