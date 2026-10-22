@@ -5,6 +5,12 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/andriichuk/laravel-http-logger/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/andriichuk/laravel-http-logger/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/andriichuk/laravel-http-logger.svg?style=flat-square)](https://packagist.org/packages/andriichuk/laravel-http-logger)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/vyshyvanka-signature-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/vyshyvanka-signature-light.svg">
+  <img alt="Ukrainian embroidery-inspired ornament" src="docs/assets/vyshyvanka-signature-light.svg" width="720">
+</picture>
+
 A **super simple**, configurable HTTP request and response logger for Laravel, ideal for APIs.
 
 - **Sanitization** — Mask sensitive fields and headers (e.g. password, authorization).
@@ -110,4 +116,5 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 - [Serhii Andriichuk](https://github.com/andriichuk)
 - [All Contributors](https://github.com/andriichuk/laravel-http-logger/contributors)
+
 
