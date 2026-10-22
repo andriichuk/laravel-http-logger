@@ -1,3 +1,9 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/vyshyvanka-signature-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/vyshyvanka-signature-light.svg">
+  <img alt="Ukrainian embroidery-inspired ornament" src="docs/assets/vyshyvanka-signature-light.svg" width="720">
+</picture>
+
 # Laravel HTTP Logger
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/andriichuk/laravel-http-logger.svg?style=flat-square)](https://packagist.org/packages/andriichuk/laravel-http-logger)
@@ -110,4 +116,5 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 - [Serhii Andriichuk](https://github.com/andriichuk)
 - [All Contributors](https://github.com/andriichuk/laravel-http-logger/contributors)
+
 
