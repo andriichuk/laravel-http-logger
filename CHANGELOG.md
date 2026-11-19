@@ -2,6 +2,17 @@
 
 All notable changes to `laravel-http-logger` will be documented in this file.
 
+## 0.3.0 - 2026-11-19
+
+### Added
+
+- Laravel 9.x support on PHP 8.0.2 through 8.2.
+- CI coverage for Laravel 9.0 on PHP 8.0 and Laravel 9.52 on PHP 8.2.
+
+Composer may block dependency updates in Laravel 9 projects because of framework security advisories.
+
+[Compare 0.2.8 and 0.3.0](https://github.com/andriichuk/laravel-http-logger/compare/0.2.8...0.3.0)
+
 ## 0.2.6 - 2025-03-15
 
 ### Changed
