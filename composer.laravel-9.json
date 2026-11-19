@@ -1,0 +1,73 @@
+{
+    "license": "MIT",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "."
+        }
+    ],
+    "require-dev": {
+        "andriichuk/laravel-http-logger": "@dev",
+        "laravel/framework": "^9.0",
+        "orchestra/testbench": "^7.0",
+        "pestphp/pest": "^1.23"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Andriichuk\\HttpLogger\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "policy": {
+            "advisories": {
+                "audit": "report",
+                "ignore": {
+                    "laravel/framework": {
+                        "constraint": "^9.0",
+                        "on-audit": false,
+                        "reason": "Run the compatibility suite against Laravel 9 in an isolated test project."
+                    },
+                    "symfony/http-foundation": {
+                        "constraint": "6.0.*",
+                        "on-audit": false,
+                        "reason": "Symfony 6.0 is required to run the compatibility suite on PHP 8.0."
+                    },
+                    "symfony/http-kernel": {
+                        "constraint": "6.0.*",
+                        "on-audit": false,
+                        "reason": "Symfony 6.0 is required to run the compatibility suite on PHP 8.0."
+                    },
+                    "symfony/mailer": {
+                        "constraint": "6.0.*",
+                        "on-audit": false,
+                        "reason": "Symfony 6.0 is required to run the compatibility suite on PHP 8.0."
+                    },
+                    "symfony/mime": {
+                        "constraint": "6.0.*",
+                        "on-audit": false,
+                        "reason": "Symfony 6.0 is required to run the compatibility suite on PHP 8.0."
+                    },
+                    "symfony/process": {
+                        "constraint": "6.0.*",
+                        "on-audit": false,
+                        "reason": "Symfony 6.0 is required to run the compatibility suite on PHP 8.0."
+                    },
+                    "symfony/routing": {
+                        "constraint": "6.0.*",
+                        "on-audit": false,
+                        "reason": "Symfony 6.0 is required to run the compatibility suite on PHP 8.0."
+                    },
+                    "symfony/yaml": {
+                        "constraint": "6.0.*",
+                        "on-audit": false,
+                        "reason": "Symfony 6.0 is required to run the compatibility suite on PHP 8.0."
+                    }
+                }
+            }
+        }
+    },
+    "prefer-stable": true
+}

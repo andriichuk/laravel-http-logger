@@ -8,7 +8,7 @@ namespace Andriichuk\HttpLogger;
  * Sanitizes request/response data for safe logging: masks sensitive keys
  * and truncates long strings.
  */
-final readonly class Sanitizer
+final class Sanitizer
 {
     private const DEFAULT_SENSITIVE_KEYS = [
         'token',

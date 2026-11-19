@@ -15,7 +15,9 @@ A **super simple**, configurable HTTP request and response logger for Laravel, i
 
 ## Installation
 
-**Requirements:** PHP 8.3+ and Laravel 11.x, 12.x, or 13.x.
+**Requirements:** Laravel 9.x on PHP 8.0.2 through 8.2, or Laravel 11.x, 12.x, or 13.x on a PHP version supported by Laravel.
+
+Composer may block dependency updates in Laravel 9 projects because of framework security advisories.
 
 Install the package via Composer:
 

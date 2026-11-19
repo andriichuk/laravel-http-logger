@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Andriichuk\HttpLogger\Listeners;
 
 use Andriichuk\HttpLogger\Sanitizer;
-use Illuminate\Container\Attributes\Config;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -18,10 +17,9 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
  * Listens for RequestHandled and logs request/response to the configured channel
  * when enabled, route and status filters match.
  */
-final readonly class LogHttpRequest
+final class LogHttpRequest
 {
     public function __construct(
-        #[Config('http-logger')]
         private array $config,
         private Sanitizer $sanitizer,
     ) {}

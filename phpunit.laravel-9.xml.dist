@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.6/phpunit.xsd"
+    bootstrap="vendor/autoload.php"
+    failOnWarning="true"
+    failOnRisky="true"
+>
+    <testsuites>
+        <testsuite name="Laravel 9">
+            <directory>tests</directory>
+            <exclude>tests/ArchTest.php</exclude>
+        </testsuite>
+    </testsuites>
+</phpunit>

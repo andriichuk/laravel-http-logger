@@ -22,6 +22,13 @@ final class HttpLoggerServiceProvider extends PackageServiceProvider
             ->hasConfigFile();
     }
 
+    public function packageRegistered(): void
+    {
+        $this->app->when(LogHttpRequest::class)
+            ->needs('$config')
+            ->give(fn ($app): array => $app['config']->get('http-logger'));
+    }
+
     public function bootingPackage(): void
     {
         Event::listen(RequestHandled::class, LogHttpRequest::class);

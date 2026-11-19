@@ -5,8 +5,9 @@ on:
     paths:
       - '**.php'
       - '.github/workflows/run-tests.yml'
-      - 'phpunit.xml.dist'
+      - 'phpunit*.xml.dist'
       - 'composer.json'
+      - 'composer.laravel-9.json'
       - 'composer.lock'
 
 concurrency:
@@ -60,3 +61,39 @@ jobs:
 
       - name: Execute tests
         run: vendor/bin/pest --ci
+
+  test-laravel-9:
+    name: P${{ matrix.php }} - L${{ matrix.laravel }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      COMPOSER: composer.laravel-9.json
+    strategy:
+      matrix:
+        include:
+          - php: '8.0'
+            laravel: '9.0.0'
+            testbench_core: 7.0.*
+          - php: '8.2'
+            laravel: 9.52.*
+            testbench_core: 7.*
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, mbstring, fileinfo, gd
+          coverage: none
+          tools: composer:2.10
+
+      - name: Install dependencies
+        run: >-
+          composer update --prefer-dist --no-interaction
+          --with "laravel/framework:${{ matrix.laravel }}"
+          --with "orchestra/testbench-core:${{ matrix.testbench_core }}"
+
+      - name: Execute tests
+        run: vendor/bin/pest --configuration phpunit.laravel-9.xml.dist

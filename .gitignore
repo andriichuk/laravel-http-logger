@@ -1,5 +1,6 @@
 # Composer Related
 composer.lock
+/composer.laravel-9.lock
 /vendor
 
 # Frontend Assets
