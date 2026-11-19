@@ -51,6 +51,13 @@ jobs:
           echo "::add-matcher::${{ runner.tool_cache }}/php.json"
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
+      - name: Allow Laravel 11 in the compatibility suite
+        if: matrix.laravel == '11.*'
+        shell: bash
+        run: >-
+          composer config --json policy.advisories.ignore
+          '{"laravel/framework":{"constraint":"^11.0","on-audit":false,"reason":"Run the Laravel 11 compatibility suite in CI."}}'
+
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
